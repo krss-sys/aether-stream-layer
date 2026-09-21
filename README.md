@@ -19,18 +19,21 @@ A lightweight, high-throughput message streaming component built in C++20 for Li
 
 ### Prerequisites
 - **OS**: Linux (Ubuntu / WSL2)
-- **Compiler**: `g++` with C++20 support
+- **Toolchain**: `cmake` (>= 3.16), `g++` with C++20 support
 
 ### Quick Start
 ```bash
-# Compile with C++20 standard, include path, and POSIX threads
-g++ -std=c++20 src/main.cpp -Iinclude -pthread -o main
+# Configure & build project
+cmake -B build
+cmake --build build
 
-# Run executable
-./main
+# Run application
+./build/aether_broker
+
 ```
+
 ---
 
 ## Engineering Log
 
-* **2026-09-20**: Initialized project architecture (`include/`, `src/`) and implemented core thread-safe message queue (`ThreadSafeQueue.hpp`).
+* Integrated build system verification with CMake, optimized execution workflow via terminal, and finalized core README documentation structure.
