@@ -23,13 +23,20 @@ A lightweight, high-throughput message streaming component built in C++20 for Li
 
 ### Quick Start
 ```bash
-# Configure & build project
+# 1. Configure & build project
 cmake -B build
 cmake --build build
 
-# Run application
+# 2. Run main application
 ./build/aether_broker
 
+# 3. Run unit tests
+ctest --test-dir build --output-on-failure
+
+# 4. Run tests with ThreadSanitizer (TSan)
+cmake -B build-tsan -DAETHER_SANITIZE=thread
+cmake --build build-tsan
+ctest --test-dir build-tsan --output-on-failure
 ```
 
 ---
