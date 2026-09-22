@@ -36,4 +36,6 @@ cmake --build build
 
 ## Engineering Log
 
-* Integrated build system verification with CMake, optimized execution workflow via terminal, and finalized core README documentation structure.
+* Integrated GoogleTest using CMake `FetchContent` and configured ThreadSanitizer to catch data races early. 
+* Writing unit tests alongside thread-safe data structures like `ThreadSafeQueue` provided clear visibility into race conditions and mutex locking behavior.
+* Standardized the build and test pipeline with CMake and CTest for a more reliable development workflow.
