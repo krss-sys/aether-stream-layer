@@ -43,6 +43,5 @@ ctest --test-dir build-tsan --output-on-failure
 
 ## Engineering Log
 
-* Integrated GoogleTest using CMake `FetchContent` and configured ThreadSanitizer to catch data races early. 
-* Writing unit tests alongside thread-safe data structures like `ThreadSafeQueue` provided clear visibility into race conditions and mutex locking behavior.
-* Standardized the build and test pipeline with CMake and CTest for a more reliable development workflow.
+### Phase 1: Networking & Linux Systems Core
+* Implemented RAII `FileDescriptor` wrapper to safely manage OS resources with move semantics and strict copy prevention.
