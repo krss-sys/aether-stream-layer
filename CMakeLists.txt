@@ -4,10 +4,10 @@ project(aether_broker CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Cờ cảnh báo biên dịch nghiêm ngặt
+# Strict compiler warning flags
 add_compile_options(-Wall -Wextra -Wpedantic)
 
-# --- 1. CẤU HÌNH SANITIZER (Công tắc soi lỗi bộ nhớ / race condition) ---
+# --- 1. SANITIZER CONFIGURATION (Memory / Race Condition detection flags) ---
 set(AETHER_SANITIZE "" CACHE STRING "Options: address | thread | undefined")
 if(AETHER_SANITIZE)
     message(STATUS "Enabling Sanitizer: ${AETHER_SANITIZE}")
@@ -15,32 +15,35 @@ if(AETHER_SANITIZE)
     add_link_options(-fsanitize=${AETHER_SANITIZE})
 endif()
 
-# Thư mục chứa file header (.hpp)
+# Header files directory (.hpp)
 include_directories(include)
 
-# --- 2. FILE CHẠY CHÍNH ---
+# --- 2. MAIN EXECUTABLE ---
 add_executable(aether_broker src/main.cpp)
 
 find_package(Threads REQUIRED)
 target_link_libraries(aether_broker PRIVATE Threads::Threads)
 
-# --- 3. TÍCH HỢP GOOGLETEST VIA FETCHCONTENT ---
+# --- 3. GOOGLETEST INTEGRATION VIA FETCHCONTENT ---
 include(FetchContent)
 FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz
 )
-# Bỏ qua cài đặt các bài test mặc định của GTest để build nhanh hơn
+# Override default GTest installation settings to speed up build
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-# Đánh dấu bật tính năng testing cho CMake
+# Enable testing functionality for CMake
 enable_testing()
 
-# Tạo target test riêng
-add_executable(aether_tests test/test_queue.cpp)
+# Create dedicated test target
+add_executable(aether_tests 
+    tests/test_queue.cpp 
+    tests/test_fd.cpp
+)
 target_link_libraries(aether_tests PRIVATE GTest::gtest_main Threads::Threads)
 
-# Tự động nhận diện bài test cho ctest
+# Automatically discover tests for ctest
 include(GoogleTest)
 gtest_discover_tests(aether_tests)

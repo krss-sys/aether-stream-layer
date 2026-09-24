@@ -37,6 +37,9 @@ ctest --test-dir build --output-on-failure
 cmake -B build-tsan -DAETHER_SANITIZE=thread
 cmake --build build-tsan
 ctest --test-dir build-tsan --output-on-failure
+
+# 5. Trace system calls (verify file descriptor lifecycle with Linux strace)
+strace -e trace=close,pipe2,pipe ./build/aether_tests
 ```
 
 ---
@@ -51,3 +54,5 @@ ctest --test-dir build-tsan --output-on-failure
 
 ### Phase 1: Networking & Linux Systems Core
 * Implemented RAII `FileDescriptor` wrapper to safely manage OS resources with move semantics and strict copy prevention.
+* Verified `FileDescriptor` move semantics and exception safety using GoogleTest framework.
+* Confirmed non-leaking descriptor destruction and prevented double-close bugs by analyzing system calls with `strace`.
