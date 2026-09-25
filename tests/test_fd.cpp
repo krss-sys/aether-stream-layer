@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <unistd.h>
 #include <cstring>
-#include "fd.hpp"
+#include "file_descriptor.hpp"
 
 // Test 1: Verify RAII wrapper over pipe(), writing and reading data
 TEST(FileDescriptorTest, PipeReadWrite) {

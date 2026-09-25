@@ -29,6 +29,7 @@ cmake --build build
 
 # 2. Run main application
 ./build/aether_broker
+./build/aether_server
 
 # 3. Run unit tests
 ctest --test-dir build --output-on-failure
@@ -46,13 +47,20 @@ strace -e trace=close,pipe2,pipe ./build/aether_tests
 
 ## Engineering Log
 
-### Phase 0: Project Infrastructure & Setup
+<details>
+<summary><b>Phase 0: Project Infrastructure & Setup (Completed)</b></summary>
+
 * Integrated build system verification with CMake, optimized execution workflow via terminal, and finalized core README documentation structure.
 * Integrated GoogleTest using CMake `FetchContent` and configured ThreadSanitizer to catch data races early.
 * Writing unit tests alongside thread-safe data structures like `ThreadSafeQueue` provided clear visibility into race conditions and mutex locking behavior.
 * Standardized the build and test pipeline with CMake and CTest for a more reliable development workflow.
 
+</details>
+
 ### Phase 1: Networking & Linux Systems Core
 * Implemented RAII `FileDescriptor` wrapper to safely manage OS resources with move semantics and strict copy prevention.
-* Verified `FileDescriptor` move semantics and exception safety using GoogleTest framework.
-* Confirmed non-leaking descriptor destruction and prevented double-close bugs by analyzing system calls with `strace`.
+* Verified `FileDescriptor` move semantics and exception safety using GoogleTest framework[cite: 8].
+* Confirmed non-leaking descriptor destruction and prevented double-close bugs by analyzing system calls with `strace`[cite: 8].
+* Designed `TcpServer` core socket initialization sequence (`socket`, `setsockopt`, `bind`, `listen`) under `aether` namespace[cite: 4, 8].
+* Configured `SO_REUSEADDR` socket option to handle immediate socket address rebinding upon server restarts[cite: 8].
+* Verified active server socket listening state on port `8080` via Linux network utility `ss -ltnp`[cite: 8].
