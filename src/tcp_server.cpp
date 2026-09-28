@@ -3,7 +3,9 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
+#include <array>
 #include <cerrno>
 #include <system_error>
 
@@ -39,5 +41,32 @@ void TcpServer::listen_start() {
     if (::listen(listen_fd_.get(), SOMAXCONN) < 0) {
         throw std::system_error(errno, std::generic_category(), "Failed to listen on socket");
     }
+}
+
+FileDescriptor TcpServer::accept_one(std::string& peer_ip, uint16_t& peer_port) {
+    // Structure to hold client address info populated by the kernel
+    sockaddr_in client_addr{};
+    socklen_t client_len = sizeof(client_addr);
+
+    // 1. Accept an incoming connection and get a dedicated socket descriptor
+    int client_fd =
+        ::accept(listen_fd_.get(), reinterpret_cast<sockaddr*>(&client_addr), &client_len);
+    if (client_fd < 0) {
+        throw std::system_error(errno, std::generic_category(), "accept failed");
+    }
+
+    // 2. Convert binary IP address to human-readable string (e.g., "127.0.0.1")
+    char ip_str[INET_ADDRSTRLEN];
+    if (::inet_ntop(AF_INET, &(client_addr.sin_addr), ip_str, sizeof(ip_str)) != nullptr) {
+        peer_ip = ip_str;
+    } else {
+        peer_ip = "unknown";
+    }
+
+    // 3. Convert port from Network Byte Order (Big-Endian) to Host Byte Order (Little-Endian)
+    peer_port = ntohs(client_addr.sin_port);
+
+    // 4. Wrap raw socket handle in RAII FileDescriptor for automatic resource management
+    return FileDescriptor(client_fd);
 }
 }  // namespace aether

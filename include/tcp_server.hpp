@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-
+#include <string>
 #include "file_descriptor.hpp"
 
 namespace aether {
@@ -13,6 +13,8 @@ class TcpServer {
 
     // Initialize socket, set socket options, bind to port, and start listening
     void listen_start();
+
+    FileDescriptor accept_one(std::string& peer_ip, uint16_t& peer_port);
 
    private:
     uint16_t port_;

@@ -64,3 +64,4 @@ strace -e trace=close,pipe2,pipe ./build/aether_tests
 * Designed `TcpServer` core socket initialization sequence (`socket`, `setsockopt`, `bind`, `listen`) under `aether` namespace[cite: 4, 8].
 * Configured `SO_REUSEADDR` socket option to handle immediate socket address rebinding upon server restarts[cite: 8].
 * Verified active server socket listening state on port `8080` via Linux network utility `ss -ltnp`[cite: 8].
+* Implemented `TcpServer::accept_one` for client connection acceptance with IPv4/port extraction, verified via `nc`, and refactored CMake to package core logic into `aether_core` static library.

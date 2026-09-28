@@ -18,16 +18,23 @@ endif()
 # Header files directory (.hpp)
 include_directories(include)
 
-# --- 2. MAIN SERVER EXECUTABLE ---
-add_executable(aether_server
-    src/main.cpp
-    src/tcp_server.cpp
-)
+# --- 2. EXTRACT AETHER_CORE STATIC LIBRARY ---
+# Automatically collect all source files in src/
+file(GLOB CORE_SRC CONFIGURE_DEPENDS "src/*.cpp")
+# Exclude main.cpp from the core static library
+list(FILTER CORE_SRC EXCLUDE REGEX "main\\.cpp$")
+
+# Build the aether_core static library
+add_library(aether_core STATIC ${CORE_SRC})
+
+# --- 3. MAIN SERVER EXECUTABLE ---
+add_executable(aether_server src/main.cpp)
 
 find_package(Threads REQUIRED)
-target_link_libraries(aether_server PRIVATE Threads::Threads)
+# Link aether_core and Threads to the server executable
+target_link_libraries(aether_server PRIVATE aether_core Threads::Threads)
 
-# --- 3. GOOGLETEST INTEGRATION ---
+# --- 4. GOOGLETEST INTEGRATION ---
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -44,7 +51,8 @@ add_executable(aether_tests
     tests/test_queue.cpp 
     tests/test_fd.cpp
 )
-target_link_libraries(aether_tests PRIVATE GTest::gtest_main Threads::Threads)
+# Link aether_core to the test executable as well
+target_link_libraries(aether_tests PRIVATE aether_core GTest::gtest_main Threads::Threads)
 
 # Automatically discover tests for ctest
 include(GoogleTest)
