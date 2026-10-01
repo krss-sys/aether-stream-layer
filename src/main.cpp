@@ -5,6 +5,7 @@
 #include <iostream>
 #include <system_error>
 
+#include "net_io.hpp"
 #include "tcp_server.hpp"
 
 int main() {
@@ -25,17 +26,23 @@ int main() {
 
         char buffer[1024];
         while (true) {
-            ssize_t bytes_received = ::recv(client_fd.get(), buffer, sizeof(buffer), 0);
+            // Receive data safely, handling EINTR retries
+            ssize_t bytes_received = aether::recv_some(client_fd.get(), buffer, sizeof(buffer));
 
             if (bytes_received > 0) {
-                // n > 0: Send back the received data to client
-                ::send(client_fd.get(), buffer, bytes_received, 0);
+                // Send all data back, handling partial writes, EINTR, and preventing SIGPIPE
+                bool ok =
+                    aether::send_all(client_fd.get(), buffer, static_cast<size_t>(bytes_received));
+                if (!ok) {
+                    std::cout << "Send error, closing connection!" << std::endl;
+                    break;
+                }
             } else if (bytes_received == 0) {
-                // n == 0: Peer closed connection
+                // Peer closed connection
                 std::cout << "peer closed" << std::endl;
                 break;
             } else {
-                // n < 0: Error occurred
+                // Error occurred during receive
                 std::cerr << "recv error: " << std::strerror(errno) << std::endl;
                 break;
             }
