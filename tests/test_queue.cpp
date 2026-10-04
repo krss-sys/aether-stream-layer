@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../include/ThreadSafeQueue.hpp"
+#include "../include/thread_safe_queue.hpp"
 
 TEST(ThreadSafeQueueTest, BasicPushPop) {
     ThreadSafeQueue<int> queue;
