@@ -31,11 +31,10 @@ sequenceDiagram
         Main->>Main: Wait for connection (accept)
         Client->>Main: Connect (TCP Handshake)
         Main->>Worker: Spawn thread & move(client_fd)
-        activate Worker
         Note over Main: Immediately resume accept loop
     end
 
-    Worker->>Client: Handle Echo I/O independently
+    Client->>Worker: Send message (Request)
+    Worker-->>Client: Echo response back
     Client->>Worker: Disconnect (FIN)
     Worker->>Worker: Close Socket & Exit Thread
-    deactivate Worker
