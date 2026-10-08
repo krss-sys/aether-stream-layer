@@ -54,6 +54,12 @@ add_executable(aether_tests
 # Link aether_core to the test executable as well
 target_link_libraries(aether_tests PRIVATE aether_core GTest::gtest_main Threads::Threads)
 
+# Create CLI executable target
+add_executable(aether_cli tools/aether_cli.cpp)
+
+# Link aether_core to the CLI executable
+target_link_libraries(aether_cli PRIVATE aether_core)
+
 # Automatically discover tests for ctest
 include(GoogleTest)
 gtest_discover_tests(aether_tests)

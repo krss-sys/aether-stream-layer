@@ -29,7 +29,8 @@ cmake --build build
 
 # 2. Run main application
 ./build/aether_broker
-./build/aether_server
+./build/aether_server 8080
+./build/aether_cli 127.0.0.1 8080 "hello"
 
 # 3. Run unit tests
 ctest --test-dir build --output-on-failure
