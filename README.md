@@ -27,10 +27,9 @@ A lightweight, high-throughput message streaming component built in C++20 for Li
 cmake -B build
 cmake --build build
 
-# 2. Run main application
-./build/aether_broker
+# 2. Run Echo Server & Client
 ./build/aether_server 8080
-./build/aether_cli 127.0.0.1 8080 "hello"
+./build/aether_cli 127.0.0.1 8080 "hello aether"
 
 # 3. Run unit tests
 ctest --test-dir build --output-on-failure
@@ -40,8 +39,8 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread
 cmake --build build-tsan
 ctest --test-dir build-tsan --output-on-failure
 
-# 5. Trace system calls (verify file descriptor lifecycle with Linux strace)
-strace -e trace=close,pipe2,pipe ./build/aether_tests
+# 5. Trace server system calls (verify multi-threaded execution)
+strace -f -o trace.txt ./build/aether_server 8080
 ```
 
 ---
