@@ -47,5 +47,7 @@ strace -f -o trace.txt ./build/aether_server 8080
 
 ## Documentation & Notes
 
-For detailed technical notes, architecture decision records (ADR), and sequence diagrams, refer to:
-- [Technical Notes & Architecture Diagrams](docs/notes.md)
+For detailed technical notes, architecture decision records (ADR), and phase specifications, refer to:
+- [Phase 1: Echo Server & Basic Networking](docs/phase-1.md)
+- [Phase 2: Message Broker & Protocol Design](docs/phase-2.md)
+- [Protocol Specification (Framing)](docs/PROTOCOL.md)
