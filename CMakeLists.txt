@@ -50,6 +50,7 @@ enable_testing()
 add_executable(aether_tests 
     tests/test_queue.cpp 
     tests/test_fd.cpp
+    tests/test_frame.cpp
 )
 # Link aether_core to the test executable as well
 target_link_libraries(aether_tests PRIVATE aether_core GTest::gtest_main Threads::Threads)
