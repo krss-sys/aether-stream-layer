@@ -61,6 +61,8 @@ add_executable(aether_cli tools/aether_cli.cpp)
 # Link aether_core to the CLI executable
 target_link_libraries(aether_cli PRIVATE aether_core)
 
+add_test(NAME AetherTestSuite COMMAND aether_tests)
+
 # Automatically discover tests for ctest
 include(GoogleTest)
 gtest_discover_tests(aether_tests)

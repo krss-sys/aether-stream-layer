@@ -5,6 +5,7 @@
 #include <mutex>
 #include <queue>
 
+namespace aether {
 template <typename T>
 class ThreadSafeQueue {
    private:
@@ -39,5 +40,5 @@ class ThreadSafeQueue {
         return queue_.empty();
     }
 };
-
+}  // namespace aether
 #endif  // THREAD_SAFE_QUEUE_HPP

@@ -2,7 +2,7 @@
 #include "../include/thread_safe_queue.hpp"
 
 TEST(ThreadSafeQueueTest, BasicPushPop) {
-    ThreadSafeQueue<int> queue;
+    aether::ThreadSafeQueue<int> queue;
     queue.push(42);
     
     int value = 0;
@@ -13,7 +13,7 @@ TEST(ThreadSafeQueueTest, BasicPushPop) {
 }
 
 TEST(ThreadSafeQueueTest, PopEmptyQueue) {
-    ThreadSafeQueue<int> queue;
+    aether::ThreadSafeQueue<int> queue;
     int value = 0;
     
     bool popped = queue.try_pop(value);
