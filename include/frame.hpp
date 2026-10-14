@@ -21,6 +21,8 @@ class FrameDecoder {
     void feed(const uint8_t* data, size_t n);
 
     std::optional<std::vector<uint8_t>> next();
+
+    bool has_error() const;
 };
 }  // namespace aether
 #endif

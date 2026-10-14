@@ -62,4 +62,6 @@ std::optional<std::vector<uint8_t>> FrameDecoder::next() {
     buf_.erase(buf_.begin(), buf_.begin() + total);
     return payload;
 }
+
+bool FrameDecoder::has_error() const { return error_; }
 }  // namespace aether

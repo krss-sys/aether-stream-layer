@@ -34,12 +34,17 @@ cmake --build build
 # 3. Run unit tests
 ctest --test-dir build --output-on-failure
 
-# 4. Run tests with ThreadSanitizer (TSan)
+# 4. Run tests with AddressSanitizer (ASan)
+cmake -B build-asan -DAETHER_SANITIZE=address
+cmake --build build-asan
+ctest --test-dir build-asan --output-on-failure
+
+# 5. Run tests with ThreadSanitizer (TSan)
 cmake -B build-tsan -DAETHER_SANITIZE=thread
 cmake --build build-tsan
 ctest --test-dir build-tsan --output-on-failure
 
-# 5. Trace server system calls (verify multi-threaded execution)
+# 6. Trace server system calls (verify multi-threaded execution)
 strace -f -o trace.txt ./build/aether_server 8080
 ```
 
