@@ -8,6 +8,7 @@
 #include <system_error>
 #include <thread>
 
+#include "frame.hpp"
 #include "logger.hpp"
 #include "net_io.hpp"
 #include "tcp_server.hpp"
@@ -35,20 +36,32 @@ struct ConnectionGuard {
 void handle_echo(aether::FileDescriptor client_fd) {
     // Automatically increment counter on entry and decrement on exit
     ConnectionGuard guard;
-    char buffer[1024];
+    aether::FrameDecoder decoder;
+    uint8_t buffer[4096];
 
     while (true) {
         // Receive data safely, handling EINTR retries
         ssize_t bytes_received = aether::recv_some(client_fd.get(), buffer, sizeof(buffer));
 
         if (bytes_received > 0) {
-            // Send all data back, handling partial writes, EINTR, and preventing SIGPIPE
-            bool ok =
-                aether::send_all(client_fd.get(), buffer, static_cast<size_t>(bytes_received));
-            if (!ok) {
-                aether::Logger::log(aether::Logger::Level::Error,
-                                    "Send error, closing connection!");
-                break;
+            decoder.feed(buffer, static_cast<size_t>(bytes_received));
+            while (auto frame = decoder.next()) {
+                std::string msg(frame->begin(), frame->end());
+                aether::Logger::log(aether::Logger::Level::Info, "Received frame: " + msg);
+                auto wire_bytes = aether::encode_frame(*frame);
+
+                bool ok = aether::send_all(client_fd.get(), wire_bytes.data(), wire_bytes.size());
+                if (!ok) {
+                    aether::Logger::log(aether::Logger::Level::Error,
+                                        "Send error, closing connection!");
+                    return;
+                }
+            }
+            if (decoder.has_error()) {
+                aether::Logger::log(
+                    aether::Logger::Level::Warn,
+                    "Frame exceeds size limit (DoS prevention). Closing connection.");
+                return;
             }
         } else if (bytes_received == 0) {
             // Peer closed connection gracefully
