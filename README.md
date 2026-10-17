@@ -22,30 +22,49 @@ A lightweight, high-throughput message streaming component built in C++20 for Li
 - **Toolchain**: `cmake` (>= 3.16), `g++` with C++20 support
 
 ### Quick Start
+### Quick Start
+
+1. **Build**
 ```bash
-# 1. Configure & build project
-cmake -B build
-cmake --build build
+   cmake -B build
+   cmake --build build
+```
 
-# 2. Run Echo Server & Client
-./build/aether_server 8080
-./build/aether_cli 127.0.0.1 8080 "hello aether"
+2. **Run Echo Server & Client**
+```bash
+   # Terminal 1: launch server
+   ./build/aether_server 8080
 
-# 3. Run unit tests
-ctest --test-dir build --output-on-failure
+   # Terminal 2: run client
+   ./build/aether_cli 127.0.0.1 8080 "hello aether"
+```
 
-# 4. Run tests with AddressSanitizer (ASan)
-cmake -B build-asan -DAETHER_SANITIZE=address
-cmake --build build-asan
-ctest --test-dir build-asan --output-on-failure
+### Diagnostics & Testing
 
-# 5. Run tests with ThreadSanitizer (TSan)
-cmake -B build-tsan -DAETHER_SANITIZE=thread
-cmake --build build-tsan
-ctest --test-dir build-tsan --output-on-failure
+- **Unit tests**
+```bash
+  ctest --test-dir build --output-on-failure
+```
 
-# 6. Trace server system calls (verify multi-threaded execution)
-strace -f -o trace.txt ./build/aether_server 8080
+- **Network torture test** (TCP coalescing & fragmentation)
+```bash
+  ./build/aether_frame_torture
+```
+
+- **Sanitizers**
+```bash
+  # AddressSanitizer (ASan)
+  cmake -B build-asan -DAETHER_SANITIZE=address && cmake --build build-asan
+  ctest --test-dir build-asan --output-on-failure
+
+  # ThreadSanitizer (TSan)
+  cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan
+  ctest --test-dir build-tsan --output-on-failure
+```
+
+- **System call tracing**
+```bash
+  strace -f -o trace.txt ./build/aether_server 8080
 ```
 
 ---

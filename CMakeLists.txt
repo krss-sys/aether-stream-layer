@@ -61,9 +61,9 @@ target_link_libraries(aether_cli PRIVATE aether_core)
 add_test(NAME AetherTestSuite COMMAND aether_tests)
 
 # Create Torture Test executable target
-add_executable(frame_torture tools/frame_torture.cpp)
+add_executable(aether_frame_torture tools/aether_frame_torture.cpp)
 # Link aether_core (and Threads if needed) to frame_torture
-target_link_libraries(frame_torture PRIVATE aether_core Threads::Threads)
+target_link_libraries(aether_frame_torture PRIVATE aether_core Threads::Threads)
 
 # Automatically discover tests for ctest
 include(GoogleTest)
