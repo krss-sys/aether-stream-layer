@@ -26,7 +26,6 @@ list(FILTER CORE_SRC EXCLUDE REGEX "main\\.cpp$")
 
 # Build the aether_core static library
 add_library(aether_core STATIC ${CORE_SRC})
-
 # --- 3. MAIN SERVER EXECUTABLE ---
 add_executable(aether_server src/main.cpp)
 
@@ -57,11 +56,14 @@ target_link_libraries(aether_tests PRIVATE aether_core GTest::gtest_main Threads
 
 # Create CLI executable target
 add_executable(aether_cli tools/aether_cli.cpp)
-
 # Link aether_core to the CLI executable
 target_link_libraries(aether_cli PRIVATE aether_core)
-
 add_test(NAME AetherTestSuite COMMAND aether_tests)
+
+# Create Torture Test executable target
+add_executable(frame_torture tools/frame_torture.cpp)
+# Link aether_core (and Threads if needed) to frame_torture
+target_link_libraries(frame_torture PRIVATE aether_core Threads::Threads)
 
 # Automatically discover tests for ctest
 include(GoogleTest)
