@@ -1,28 +1,60 @@
-# Aether Stream Layer
+# 🌌 Aether Stream Layer
 
 A lightweight, high-throughput message streaming component built in C++20 for Linux environments. It serves as the low-latency ingestion backbone for the **Aether Platform** ecosystem.
 
 ---
 
-## Overview
+## 📖 Overview
 
 `aether-stream-layer` is an AP-oriented (Availability / Partition tolerance) message streaming engine. Designed around an in-memory architecture, it prioritizes immediate availability and fast write acknowledgement (`ACK`) over synchronous disk persistence.
 
-### Core Architecture Concepts
+### 🧠 Core Architecture Concepts
 - **Concurrency & Safety**: In-memory message buffers using Modern C++ thread synchronization primitives (`std::mutex`, `std::condition_variable`).
 - **POSIX Networking**: Non-blocking/blocking TCP socket communication handling Producer-Consumer network traffic.
 - **Data Ingestion**: High-speed message queuing designed to isolate network ingestion from downstream processing.
 
 ---
 
-## Build & Execution
+## 🛠️ Build & Execution
 
-### Prerequisites
+### 📋 Prerequisites
 - **OS**: Linux (Ubuntu / WSL2)
 - **Toolchain**: `cmake` (>= 3.16), `g++` with C++20 support
 
-### Quick Start
-### Quick Start
+## 📁 Project Structure
+
+```text
+AETHER-STREAM-LAYER/
+├── docs/                 # Detailed technical documentation (Protocol specification, phases)
+│   ├── phase-1.md
+│   ├── phase-2.md
+│   └── PROTOCOL.md
+├── include/              # Core system header files (.hpp)
+│   ├── file_descriptor.hpp # RAII wrapper for file/socket descriptor management
+│   ├── frame.hpp           # Frame definition and FrameDecoder (DoS mitigation)
+│   ├── logger.hpp          # Thread-safe multi-threaded logging system
+│   ├── net_io.hpp          # Safe network I/O operations (send_all, recv_some, EINTR)
+│   ├── tcp_server.hpp      # TCP server initialization and connection acceptance loop
+│   └── thread_safe_queue.hpp # Thread-safe concurrent queue
+├── src/                  # Implementation source files (.cpp) for core modules
+│   ├── frame.cpp
+│   ├── logger.cpp
+│   ├── main.cpp
+│   ├── net_io.cpp
+│   └── tcp_server.cpp
+├── tests/                # Standalone unit tests for module verification
+│   ├── test_fd.cpp
+│   ├── test_frame.cpp
+│   └── test_queue.cpp
+├── tools/                # Diagnostic tools and utility clients
+│   ├── aether_cli.cpp          # Command-line client for interacting with the server
+│   └── aether_frame_torture.cpp # Torture test suite (coalescing, fragmentation, DoS)
+├── CMakeLists.txt        # Project-wide CMake build configuration
+├── LICENSE               # Source code license
+└── README.md             # Project overview and user guide
+```
+
+### 🚀 Quick Start
 
 1. **Build**
 ```bash
@@ -39,7 +71,7 @@ A lightweight, high-throughput message streaming component built in C++20 for Li
    ./build/aether_cli 127.0.0.1 8080 "hello aether"
 ```
 
-### Diagnostics & Testing
+### 🔬 Diagnostics & Testing
 
 - **Unit tests**
 ```bash
@@ -69,7 +101,7 @@ A lightweight, high-throughput message streaming component built in C++20 for Li
 
 ---
 
-## Documentation & Notes
+## 📚 Documentation & Notes
 
 For detailed technical notes, architecture decision records (ADR), and phase specifications, refer to:
 - [Phase 1: Echo Server & Basic Networking](docs/phase-1.md)

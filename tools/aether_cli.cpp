@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    std::string ip = argv[1];
+    std::string ip_address = argv[1];
     uint16_t port = static_cast<uint16_t>(std::stoi(argv[2]));
     std::string message = argv[3];
 
@@ -40,21 +40,21 @@ int main(int argc, char* argv[]) {
     server_addr.sin_port = htons(port);
 
     // Convert IP string to binary format using inet_pton
-    if (inet_pton(AF_INET, ip.c_str(), &server_addr.sin_addr) <= 0) {
-        aether::Logger::log(aether::Logger::Level::Error, std::string("Invalid IP address: ") + ip);
+    if (inet_pton(AF_INET, ip_address.c_str(), &server_addr.sin_addr) <= 0) {
+        aether::Logger::log(aether::Logger::Level::Error, std::string("Invalid IP address: ") + ip_address);
         return EXIT_FAILURE;
     }
 
     // 4. Initiate connection to the server
     if (connect(fd.get(), reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) < 0) {
-        aether::Logger::log(aether::Logger::Level::Error, std::string("Connect failed to ") + ip +
+        aether::Logger::log(aether::Logger::Level::Error, std::string("Connect failed to ") + ip_address +
                                                               ":" + std::to_string(port) + ": " +
                                                               strerror(errno));
         return EXIT_FAILURE;
     }
 
     aether::Logger::log(aether::Logger::Level::Info, std::string("Connected successfully to ") +
-                                                         ip + ":" + std::to_string(port));
+                                                         ip_address + ":" + std::to_string(port));
 
     // 5. Send message to server using send_all(fd, data, len)
     if (!aether::send_all(fd.get(), message.data(), message.size())) {
