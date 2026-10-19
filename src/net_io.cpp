@@ -35,4 +35,26 @@ ssize_t recv_some(int fd, void* buf, size_t cap) {
         return n;  // Return n (> 0: data, == 0: EOF, < 0: error)
     }
 }
+
+bool recv_exact(int fd, void* buf, size_t n) {
+    char* ptr = static_cast<char*>(buf);
+    size_t n_left = n;
+
+    while (n_left > 0) {
+        ssize_t received = ::recv(fd, ptr, n_left, 0);
+
+        if (received > 0) {
+            ptr += received;
+            n_left -=received;
+        } else if (received == 0) {
+            return false;
+        } else {
+            if (errno == EINTR) {
+                continue;
+            }
+            return false;
+        }
+    }
+    return true;
+}
 }  // namespace aether
