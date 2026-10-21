@@ -130,6 +130,7 @@ AETHER-STREAM-LAYER/
 │   ├── phase-2.md
 │   └── PROTOCOL.md
 ├── include/                       # Core system header files (.hpp)
+│   ├── client.hpp                 # AetherClient: RAII TCP client with length-prefixed framing (send_frame / recv_frame)
 │   ├── file_descriptor.hpp        # RAII wrapper for file/socket descriptor management
 │   ├── frame.hpp                  # Frame definition and FrameDecoder (DoS mitigation)
 │   ├── logger.hpp                 # Thread-safe multi-threaded logging system
@@ -148,7 +149,7 @@ AETHER-STREAM-LAYER/
 │   ├── test_net_io.cpp
 │   └── test_queue.cpp
 ├── tools/                         # Diagnostic tools and utility clients
-│   ├── aether_cli.cpp             # Command-line client for interacting with the server
+│   ├── aether_cli.cpp             # Command-line client (built on AetherClient) for interacting with the server
 │   └── aether_frame_torture.cpp   # Torture test suite (coalescing, fragmentation, DoS)
 ├── CMakeLists.txt                 # Project-wide CMake build configuration
 ├── LICENSE                        # Source code license
