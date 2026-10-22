@@ -134,3 +134,42 @@ sequenceDiagram
 ### 4. Architectural Rationale
 
 TCP delivers a byte stream, so the bytes of one frame can arrive split across several reads. Using `recv_some` directly for structured framing therefore leads to partial reads and protocol desynchronization. `recv_exact` guarantees that a read either returns exactly the requested number of bytes or fails, ensuring that upper-layer protocol parsers (`FrameDecoder`) only receive complete frames.
+
+---
+
+## 🧠 Day 23 — Buffer Management
+
+### 1. Buffer Allocation Follows the Frame, Not the Socket
+
+TCP gives no message boundaries (Day 21 §4), so the broker cannot "read a message" in one call. Instead, buffer allocation is driven by the **frame structure** defined in Day 14:
+
+1. **Read the 4-byte header** into a fixed-size buffer. This size never depends on input — it is always 4 bytes.
+2. **Validate `Length`** against `kMaxFrameSize` (1 MiB, Day 14 §2) *before* allocating anything. This is a comparison only — zero bytes allocated.
+3. **Allocate exactly `Length` bytes** for the body, then `recv_exact(Length)` into it (Day 21 §2).
+
+| Step | Buffer size | Constraint |
+| :--- | :--- | :--- |
+| Read header | 4 bytes, fixed | independent of input |
+| Validate `Length` | 0 bytes (compare only) | `Length <= kMaxFrameSize` (1 MiB) |
+| Read body | exactly `Length` bytes | only reached after validation passes |
+
+The key property: **no allocation happens before validation**. A header claiming ~4 GiB is rejected at step 2 with nothing allocated — the same DoS mitigation described in Day 14 §2, now expressed as an allocation-ordering rule rather than just a size check.
+
+### 2. Why the Fixed Header Buffer Matters
+
+The header read is the only place where the broker touches the socket without knowing the frame size. Keeping it at a fixed 4 bytes means:
+
+- A malicious peer cannot influence the first allocation at all — it is a compile-time constant.
+- The `Length` value is only trusted *after* it has been read in full by `recv_exact(4)` (Day 21 §3), so a partially-arrived header can never be misinterpreted as a smaller/larger frame.
+
+This is the buffer-level counterpart of the `recv_exact` guarantee: `recv_exact` ensures the 4 header bytes are complete before parsing; the fixed buffer ensures parsing never reads past them.
+
+### 3. Cross-References
+
+- `recv_some` vs `recv_exact` — see Day 21 §1.
+- `kMaxFrameSize` rationale — see Day 14 §2.
+- TCP stream model / partial reads — see Day 21 §4.
+
+### 4. Reflection
+
+The through-line of Phase 2 is that **every buffer the broker allocates is bounded by a value it has already validated**. The header buffer is bounded by the protocol (4 bytes). The body buffer is bounded by `Length`, which is bounded by `kMaxFrameSize`. Nothing the peer sends can cause an allocation larger than 1 MiB, and nothing is allocated before the bound is checked.
