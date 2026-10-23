@@ -1,5 +1,4 @@
-#ifndef AETHER_LOGGER_HPP
-#define AETHER_LOGGER_HPP
+#pragma once
 #include <string_view>
 
 namespace aether {
@@ -10,4 +9,3 @@ class Logger {
     static void log(Level level, std::string_view message);
 };
 }  // namespace aether
-#endif // AETHER_LOGGER_HPP

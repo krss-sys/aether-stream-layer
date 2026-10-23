@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <unistd.h>
+
 #include <cstring>
+
 #include "file_descriptor.hpp"
 
 // Test 1: Verify RAII wrapper over pipe(), writing and reading data
@@ -46,5 +48,5 @@ TEST(FileDescriptorTest, MoveAndRelease) {
 
     // Explicitly close the released fd to prevent resource leaks
     ::close(released_fd);
-    ::close(fds[1]); // Close remaining write end
+    ::close(fds[1]);  // Close remaining write end
 }

@@ -1,5 +1,4 @@
-#ifndef AETHER_FD_HPP
-#define AETHER_FD_HPP
+#pragma once
 
 #include <unistd.h>
 
@@ -56,5 +55,3 @@ class FileDescriptor {
     }
 };
 }  // namespace aether
-
-#endif

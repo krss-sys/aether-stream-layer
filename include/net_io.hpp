@@ -1,5 +1,4 @@
-#ifndef AETHER_NET_IO_HPP
-#define AETHER_NET_IO_HPP
+#pragma once
 
 #include <sys/types.h>
 
@@ -15,4 +14,3 @@ ssize_t recv_some(int fd, void* buf, size_t cap);
 // Receives exactly n bytes (loops until full or error/EOF, retries on EINTR)
 bool recv_exact(int fd, void* buf, size_t n);
 }  // namespace aether
-#endif

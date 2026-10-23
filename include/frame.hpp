@@ -1,5 +1,4 @@
-#ifndef FRAME_HPP
-#define FRAME_HPP
+#pragma once
 #include <cstdint>
 #include <optional>
 #include <span>
@@ -25,4 +24,3 @@ class FrameDecoder {
     bool has_error() const;
 };
 }  // namespace aether
-#endif

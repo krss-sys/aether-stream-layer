@@ -45,7 +45,7 @@ bool recv_exact(int fd, void* buf, size_t n) {
 
         if (received > 0) {
             ptr += received;
-            n_left -=received;
+            n_left -= received;
         } else if (received == 0) {
             return false;
         } else {
