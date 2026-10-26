@@ -5,7 +5,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <array>
 #include <cerrno>
 #include <system_error>
 
