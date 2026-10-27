@@ -47,7 +47,7 @@ enable_testing()
 include(GoogleTest)
 
 add_executable(aether_tests
-    tests/test_thread_pool.cpp
+    tests/test_pool.cpp
     tests/test_queue.cpp
     tests/test_fd.cpp
     tests/test_frame.cpp
