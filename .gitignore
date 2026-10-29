@@ -72,3 +72,5 @@ Testing/
 *.txt
 *.png
 trace.txt
+/html/
+/latex/

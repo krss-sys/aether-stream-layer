@@ -18,7 +18,20 @@ A lightweight, high-throughput message streaming component built in C++20 for Li
 - **POSIX Networking**: Non-blocking/blocking TCP socket communication handling Producer-Consumer network traffic.
 - **Data Ingestion**: High-speed message queuing designed to isolate network ingestion from downstream processing.
 
-### 🔀 Data Flow (simplified)
+### 🔀 Data Flow
+
+> 🚧 **Status:** the TCP server, length-prefixed framing and ThreadPool are implemented, and the server currently echoes each frame back. The message queue and `ACK` from the target design are not wired in yet.
+
+**Today (implemented):**
+
+```mermaid
+flowchart LR
+    C([Client]) -- "length-prefixed frames over TCP" --> S["TCP server<br/>(accept loop)"]
+    S -- "submit(handle_echo)" --> P["ThreadPool<br/>(fixed workers)"]
+    P --> H["handle_echo<br/>(FrameDecoder, echo frame back)"]
+```
+
+**Target design (not wired in yet):**
 
 ```mermaid
 flowchart LR
@@ -47,8 +60,8 @@ cmake --build build
 ### ▶️ Run
 
 ```bash
-# Terminal 1: start the server
-./build/aether_server 8080
+# Terminal 1: start the server (listens on port 8080)
+./build/aether_server
 
 # Terminal 2: send a message with the CLI
 ./build/aether_cli 127.0.0.1 8080 "hello aether"
@@ -58,7 +71,7 @@ After a build, everything lands in `build/`:
 
 | Executable | What it is |
 | :--- | :--- |
-| `aether_server` | The server (takes the port as its argument) |
+| `aether_server` | The server (listens on port 8080) |
 | `aether_cli` | Command-line client for talking to the server |
 | `aether_tests` | GoogleTest unit tests |
 | `aether_frame_torture` | Network torture test (coalescing, fragmentation, DoS) |
@@ -116,7 +129,7 @@ ctest --test-dir build-ubsan --output-on-failure
 ### 🔍 System call tracing
 
 ```bash
-strace -f -o trace.txt ./build/aether_server 8080
+strace -f -o trace.txt ./build/aether_server
 ```
 
 ---
@@ -128,16 +141,20 @@ AETHER-STREAM-LAYER/
 ├── docs/                          # Detailed technical documentation (Protocol specification, phases)
 │   ├── phase-1.md
 │   ├── phase-2.md
+│   ├── phase-3.md
 │   └── PROTOCOL.md
 ├── include/                       # Core system header files (.hpp)
-│   ├── client.hpp                 # AetherClient: RAII TCP client with length-prefixed framing (send_frame / recv_frame)
+│   ├── client.hpp                 # AetherClient: RAII TCP client with length-prefixed framing (send_frame / recv_frame); also declares handle_echo()
+│   ├── connection_guard.hpp       # RAII guard that logs client connect / disconnect
 │   ├── file_descriptor.hpp        # RAII wrapper for file/socket descriptor management
 │   ├── frame.hpp                  # Frame definition and FrameDecoder (DoS mitigation)
 │   ├── logger.hpp                 # Thread-safe multi-threaded logging system
-│   ├── net_io.hpp                 # Safe network I/O operations (send_all, recv_some, EINTR)
-│   ├── tcp_server.hpp             # TCP server initialization and connection acceptance loop
+│   ├── net_io.hpp                 # Safe network I/O operations (send_all, recv_some, recv_exact, EINTR)
+│   ├── tcp_server.hpp             # TCP server: accepts connections and submits each one to the ThreadPool
+│   ├── thread_pool.hpp            # Fixed-size ThreadPool: workers pull tasks from ThreadSafeQueue
 │   └── thread_safe_queue.hpp      # Thread-safe concurrent queue
 ├── src/                           # Implementation source files (.cpp) for core modules
+│   ├── client.cpp
 │   ├── frame.cpp
 │   ├── logger.cpp
 │   ├── main.cpp
@@ -147,11 +164,13 @@ AETHER-STREAM-LAYER/
 │   ├── test_fd.cpp
 │   ├── test_frame.cpp
 │   ├── test_net_io.cpp
+│   ├── test_pool.cpp
 │   └── test_queue.cpp
 ├── tools/                         # Diagnostic tools and utility clients
 │   ├── aether_cli.cpp             # Command-line client (built on AetherClient) for interacting with the server
 │   └── aether_frame_torture.cpp   # Torture test suite (coalescing, fragmentation, DoS)
 ├── CMakeLists.txt                 # Project-wide CMake build configuration
+├── Doxyfile                       # Doxygen configuration
 ├── LICENSE                        # Source code license
 └── README.md                      # Project overview and user guide
 ```
@@ -164,4 +183,5 @@ For detailed technical notes, architecture decision records (ADR), and phase spe
 
 - [Phase 1: Echo Server & Basic Networking](docs/phase-1.md)
 - [Phase 2: Message Broker & Protocol Design](docs/phase-2.md)
+- [Phase 3: Concurrency & ThreadPool Design](docs/phase-3.md)
 - [Protocol Specification (Framing)](docs/PROTOCOL.md)

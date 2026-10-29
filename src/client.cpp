@@ -2,6 +2,7 @@
 #include "net_io.hpp"
 #include "frame.hpp"
 #include "logger.hpp"
+#include "connection_guard.hpp"
 
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -10,17 +11,6 @@
 #include <cerrno>
 
 namespace aether {
-
-// RAII guard to automatically manage the active connection counter
-struct ConnectionGuard {
-    ConnectionGuard() {
-        Logger::log(Logger::Level::Info, "Client connected");
-    }
-
-    ~ConnectionGuard() {
-        Logger::log(Logger::Level::Info, "Client disconnected");
-    }
-};
 
 void handle_echo(std::shared_ptr<FileDescriptor> client_fd) {
     ConnectionGuard guard;
