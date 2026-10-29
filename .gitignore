@@ -1,50 +1,36 @@
-# Prerequisites
+# --- Compiler output ---
 *.d
-
-# Compiled Object files
-*.slo
-*.lo
 *.o
 *.obj
-
-# Precompiled Headers
+*.slo
+*.lo
 *.gch
 *.pch
 
-# Linker files
+# --- Linker / debugger output ---
 *.ilk
-
-# Debugger Files
 *.pdb
+*.dwo
 
-# Compiled Dynamic libraries
+# --- Libraries and executables ---
 *.so
+*.so.*
 *.dylib
 *.dll
-*.so.*
-
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
 *.a
 *.lib
-
-# Executables
+*.la
+*.lai
 *.exe
 *.out
 *.app
 
-# Build directories
+# --- Build directories ---
 build/
 Build/
 build-*/
 
-# CMake generated files
+# --- CMake generated files ---
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
@@ -52,25 +38,30 @@ Makefile
 install_manifest.txt
 compile_commands.json
 
-# Temporary files
-*.tmp
-*.log
-*.bak
-*.swp
-
-# vcpkg
+# --- Dependencies ---
 vcpkg_installed/
 
-# debug information files
-*.dwo
-
-# test output & cache
+# --- Test output and caches ---
 Testing/
 .cache/
 
-# Trace logs and temporary artifacts
-*.txt
-*.png
-trace.txt
+# --- Editor and temporary files ---
+*.tmp
+*.bak
+*.swp
+*.log
+.vscode/
+.idea/
+
+# --- Generated docs (Doxygen output) ---
 /html/
 /latex/
+docs/doxygen/
+
+# --- Local profiling artifacts ---
+# Root-level only, so images under docs/ can still be committed.
+trace.txt
+/*.png
+
+# --- Personal notes (not part of the public repo) ---
+notes/
