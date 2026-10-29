@@ -4,6 +4,7 @@
 #include <string>
 
 #include "file_descriptor.hpp"
+#include "thread_pool.hpp"
 
 namespace aether {
 
@@ -17,9 +18,12 @@ class TcpServer {
 
     FileDescriptor accept_one(std::string& peer_ip, uint16_t& peer_port);
 
+    void run();
+
    private:
     uint16_t port_;
     FileDescriptor listen_fd_;  // RAII wrapper for the listening socket file descriptor
+    ThreadPool pool_{8};
 };
 
 }  // namespace aether

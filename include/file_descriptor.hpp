@@ -2,7 +2,6 @@
 
 #include <unistd.h>
 
-#include <utility>
 
 namespace aether {
 // RAII wrapper for linux file descriptor

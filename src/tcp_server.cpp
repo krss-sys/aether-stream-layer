@@ -1,6 +1,11 @@
 #include "tcp_server.hpp"
+#include "file_descriptor.hpp"
+#include "thread_pool.hpp" 
+#include "client.hpp"
 
 #include <arpa/inet.h>
+#include <cstdint>
+#include <memory>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -67,5 +72,20 @@ FileDescriptor TcpServer::accept_one(std::string& peer_ip, uint16_t& peer_port) 
 
     // 4. Wrap raw socket handle in RAII FileDescriptor for automatic resource management
     return FileDescriptor(client_fd);
+}
+
+void TcpServer::run() {
+    listen_start();
+    while (true) {
+        std::string client_ip;
+        uint16_t client_port = 0;
+        FileDescriptor client_fd = accept_one(client_ip, client_port);
+
+        auto conn_ptr = std::make_shared<FileDescriptor>(std::move(client_fd));
+
+        pool_.submit([conn_ptr]() {
+            handle_echo(conn_ptr);
+        });
+    }
 }
 }  // namespace aether
