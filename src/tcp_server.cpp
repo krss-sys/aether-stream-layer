@@ -4,17 +4,35 @@
 #include "client.hpp"
 
 #include <arpa/inet.h>
+#include <csignal>
 #include <cstdint>
 #include <memory>
 #include <netinet/in.h>
+#include <sys/poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
-
+#include <poll.h>
 #include <cerrno>
 #include <system_error>
 
 namespace aether {
 TcpServer::TcpServer(uint16_t port) : port_(port) {}
+
+volatile std::sig_atomic_t g_stop = 0;
+
+void handle_signal(int) {
+    g_stop = 1;
+}
+
+void TcpServer::setup_signals() {
+    struct sigaction sa;
+    sa.sa_handler = handle_signal;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+
+    sigaction(SIGINT, &sa, nullptr);
+    sigaction(SIGTERM, &sa, nullptr);
+}
 
 void TcpServer::listen_start() {
     // 1. Create socket (IPv4, TCP stream)
@@ -76,16 +94,34 @@ FileDescriptor TcpServer::accept_one(std::string& peer_ip, uint16_t& peer_port) 
 
 void TcpServer::run() {
     listen_start();
-    while (true) {
-        std::string client_ip;
-        uint16_t client_port = 0;
-        FileDescriptor client_fd = accept_one(client_ip, client_port);
+    while (!g_stop) {
+        struct pollfd pfd;
+        pfd.fd = listen_fd_.get();
+        pfd.events = POLLIN;
+        pfd.revents = 0;
 
-        auto conn_ptr = std::make_shared<FileDescriptor>(std::move(client_fd));
+        int ready = poll(&pfd, 1, 500);
 
-        pool_.submit([conn_ptr]() {
-            handle_echo(conn_ptr);
-        });
+        if (ready < 0) {
+            if (errno == EINTR) {
+                continue; 
+            }
+            break;
+        }
+        if (ready == 0) {
+            continue;
+        }
+        if (pfd.revents & POLLIN) {
+            std::string client_ip;
+            uint16_t client_port = 0;
+            FileDescriptor client_fd = accept_one(client_ip, client_port);
+
+            auto conn_ptr = std::make_shared<FileDescriptor>(std::move(client_fd));
+
+            pool_.submit([conn_ptr]() {
+                handle_echo(conn_ptr);
+            });
+        }
     }
 }
 }  // namespace aether
