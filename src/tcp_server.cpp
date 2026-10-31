@@ -4,6 +4,7 @@
 #include "client.hpp"
 
 #include <arpa/inet.h>
+#include <asm-generic/socket.h>
 #include <csignal>
 #include <cstdint>
 #include <memory>
@@ -73,8 +74,16 @@ FileDescriptor TcpServer::accept_one(std::string& peer_ip, uint16_t& peer_port) 
     // 1. Accept an incoming connection and get a dedicated socket descriptor
     int client_fd =
         ::accept(listen_fd_.get(), reinterpret_cast<sockaddr*>(&client_addr), &client_len);
+
     if (client_fd < 0) {
         throw std::system_error(errno, std::generic_category(), "accept failed");
+    }
+
+    struct timeval tv;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+    if (::setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+        throw std::system_error(errno, std::generic_category(), "Failed to set SO_RCVTIMEO");
     }
 
     // 2. Convert binary IP address to human-readable string (e.g., "127.0.0.1")

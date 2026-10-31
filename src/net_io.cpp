@@ -1,4 +1,5 @@
 #include "net_io.hpp"
+#include "tcp_server.hpp"
 
 #include <sys/socket.h>
 
@@ -26,21 +27,31 @@ bool send_all(int fd, const void* data, size_t len) {
 }
 
 ssize_t recv_some(int fd, void* buf, size_t cap) {
-    while (true) {
+    while (!g_stop) {
         ssize_t n = ::recv(fd, buf, cap, 0);
 
-        if (n < 0 && errno == EINTR) {
-            continue;
+        if (n > 0) {
+            return n;
+        } else if (n == 0) {
+            return 0;
+        } else {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                continue;
+            }
+            if (errno == EINTR) {
+                continue;
+            }
+            return -1;
         }
-        return n;  // Return n (> 0: data, == 0: EOF, < 0: error)
     }
+    return -1;
 }
 
 bool recv_exact(int fd, void* buf, size_t n) {
     char* ptr = static_cast<char*>(buf);
     size_t n_left = n;
 
-    while (n_left > 0) {
+    while (n_left > 0 && !g_stop) {
         ssize_t received = ::recv(fd, ptr, n_left, 0);
 
         if (received > 0) {
@@ -49,6 +60,9 @@ bool recv_exact(int fd, void* buf, size_t n) {
         } else if (received == 0) {
             return false;
         } else {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                continue;
+            }
             if (errno == EINTR) {
                 continue;
             }
