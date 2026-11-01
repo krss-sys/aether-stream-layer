@@ -1,13 +1,6 @@
 <div align="center">
 
-```text
-    _    _____ _____ _   _ _____ ____  
-   / \  | ____|_   _| | | | ____|  _ \ 
-  / _ \ |  _|   | | | |_| |  _| | |_) |
- / ___ \| |___  | | |  _  | |___|  _ < 
-/_/   \_\_____| |_| |_| |_|_____|_| \_\
-       S T R E A M    L A Y E R
-```
+<img src="docs/assets/banner.png" alt="AETHER STREAM LAYER" width="480">
 
 # 🌌 Aether Stream Layer
 
@@ -177,6 +170,8 @@ strace -f -o trace.txt ./build/aether_server
 ```text
 AETHER-STREAM-LAYER/
 ├── docs/                          # Detailed technical documentation (Protocol specification, phases)
+│   ├── assets/
+│   │   └── banner.png             # README banner image
 │   ├── phase-1.md
 │   ├── phase-2.md
 │   ├── phase-3.md
