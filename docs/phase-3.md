@@ -62,3 +62,24 @@ To confirm the limit of the blocking model, the pool was run with a deliberately
 - **[Phase 2](phase-2.md), Day 14 §2** — `kMaxFrameSize` (1 MiB), which bounds per-connection memory.
 - **[Phase 2](phase-2.md), Day 21 §1–§2** — `recv_exact`, used by the per-connection loop to read frames.
 - **[Phase 2](phase-2.md), Day 23 §1** — validation-before-allocation, applied on every frame a worker reads.
+
+---
+
+## 🧵 Day 33 — Concurrency Review, ThreadPool Internals & Phase 3 Summary
+
+### 1. ThreadSafeQueue & Condition Variable Internals
+
+Concurrency synchronization relies on a thread-safe queue (`ThreadSafeQueue`) backed by a mutex and a condition variable (`std::condition_variable`).
+
+- **`std::unique_lock` vs `std::lock_guard` in `wait`:** `std::unique_lock` is mandatory during `cond_.wait()` because the waiting thread **must release the mutex** while sleeping so other threads can push new tasks into the queue. `std::lock_guard` lacks manual unlock/lock capabilities and would cause a deadlock if used inside a condition variable wait.
+- **Spurious Wakeup Mitigation:** The lambda predicate passed to `wait` (`[this]() { return !queue_.empty() || closed_; }`) protects against spurious wakeups (when a thread wakes up without an explicit notification). If the queue is still empty and not closed, the thread immediately goes back to sleep.
+
+### 2. ThreadPool Destructor & RAII Lifecycle
+
+- **Drain-Join Pattern:** Upon destruction, the `ThreadPool` signals the work queue to close (`queue_.close()`), waking up any blocked worker threads, and then iterates through all worker threads to invoke `.join()`, preventing `std::terminate` and ensuring clean exit.
+- **RAII Enforcement:** Managing resources through object lifecycles ensures that network file descriptors (`listen_fd`) and worker threads are automatically torn down and cleaned up when the server shuts down.
+
+### 3. Sanitizers & Concurrency Verification
+
+- **AddressSanitizer (ASan & LSan):** Verified via partitioned build directories (`build-asan`) to ensure zero memory leaks, buffer overflows, or dangling pointers during rapid client connections and graceful shutdowns.
+- **ThreadSanitizer (TSan):** Validated via (`build-tsan`) to guarantee the entire multi-threaded execution path is entirely free of data races.
