@@ -30,6 +30,12 @@ public:
 
     ~ThreadPool() {
         queue_.close();
+
+        for (auto& worker : workers_) {
+            if (worker.joinable()) {
+                worker.join();
+            }
+        }
         workers_.clear();
     }
 };

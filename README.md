@@ -1,3 +1,15 @@
+<div align="center">
+
+```text
+ █████╗ ███████╗████████╗██╗  ██╗███████╗██████╗ 
+██╔══██╗██╔════╝╚══██╔══╝██║  ██║██╔════╝██╔══██╗
+███████║█████╗     ██║   ███████║█████╗  ██████╔╝
+██╔══██║██╔══╝     ██║   ██╔══██║██╔══╝  ██╔══██╗
+██║  ██║███████╗   ██║   ██║  ██║███████╗██║  ██║
+╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+            S T R E A M    L A Y E R
+```
+
 # 🌌 Aether Stream Layer
 
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-blue)
@@ -5,6 +17,21 @@
 ![CMake](https://img.shields.io/badge/CMake-%E2%89%A5%203.16-informational)
 
 A lightweight, high-throughput message streaming component built in C++20 for Linux environments. It serves as the low-latency ingestion backbone for the **Aether Platform** ecosystem.
+
+[Overview](#-overview) · [Quick Start](#-quick-start) · [Testing & Diagnostics](#-testing--diagnostics) · [Project Structure](#-project-structure) · [Documentation](#-documentation--notes)
+
+</div>
+
+<!--
+  Demo GIF placeholder: after recording, put the file at docs/assets/demo.gif
+  and uncomment the block below.
+
+<div align="center">
+
+![Aether demo](docs/assets/demo.gif)
+
+</div>
+-->
 
 ---
 
@@ -20,7 +47,8 @@ A lightweight, high-throughput message streaming component built in C++20 for Li
 
 ### 🔀 Data Flow
 
-> 🚧 **Status:** the TCP server, length-prefixed framing and ThreadPool are implemented, and the server currently echoes each frame back. The message queue and `ACK` from the target design are not wired in yet.
+> [!NOTE]
+> **Status:** the TCP server, length-prefixed framing and ThreadPool are implemented, and the server currently echoes each frame back. The message queue and `ACK` from the target design are not wired in yet.
 
 **Today (implemented):**
 
@@ -90,9 +118,11 @@ After a build, everything lands in `build/`:
 ctest --test-dir build --output-on-failure
 ```
 
-> 💡 **Tips**
-> - Run a single test: `./build/aether_tests --gtest_filter=<Suite>.<Test>`, or `ctest --test-dir build -R <name>`
-> - `ctest --test-dir` needs CMake 3.20+. On older versions use `cd build && ctest --output-on-failure`.
+> [!TIP]
+> Run a single test: `./build/aether_tests --gtest_filter=<Suite>.<Test>`, or `ctest --test-dir build -R <name>`
+
+> [!NOTE]
+> `ctest --test-dir` needs CMake 3.20+. On older versions use `cd build && ctest --output-on-failure`.
 
 ### 🌪️ Network torture test
 
@@ -104,13 +134,17 @@ TCP coalescing and fragmentation:
 
 ### 🧪 Sanitizers
 
-Pick one sanitizer per build directory (`AETHER_SANITIZE`):
+> [!IMPORTANT]
+> Pick one sanitizer per build directory (`AETHER_SANITIZE`).
 
 | Sanitizer | `AETHER_SANITIZE` | Catches |
 | :--- | :---: | :--- |
 | AddressSanitizer (ASan) | `address` | Memory errors: out-of-bounds, use-after-free, leaks |
 | ThreadSanitizer (TSan) | `thread` | Data races |
 | UndefinedBehaviorSanitizer (UBSan) | `undefined` | Undefined behavior: overflow, bad shifts, misaligned access |
+
+<details>
+<summary><b>Show the commands</b></summary>
 
 ```bash
 # AddressSanitizer
@@ -126,6 +160,8 @@ cmake -B build-ubsan -DAETHER_SANITIZE=undefined && cmake --build build-ubsan
 ctest --test-dir build-ubsan --output-on-failure
 ```
 
+</details>
+
 ### 🔍 System call tracing
 
 ```bash
@@ -135,6 +171,9 @@ strace -f -o trace.txt ./build/aether_server
 ---
 
 ## 📁 Project Structure
+
+<details>
+<summary><b>Show the project tree</b></summary>
 
 ```text
 AETHER-STREAM-LAYER/
@@ -169,11 +208,14 @@ AETHER-STREAM-LAYER/
 ├── tools/                         # Diagnostic tools and utility clients
 │   ├── aether_cli.cpp             # Command-line client (built on AetherClient) for interacting with the server
 │   └── aether_frame_torture.cpp   # Torture test suite (coalescing, fragmentation, DoS)
+├── .gitignore                     # Files and directories excluded from version control
 ├── CMakeLists.txt                 # Project-wide CMake build configuration
 ├── Doxyfile                       # Doxygen configuration
 ├── LICENSE                        # Source code license
 └── README.md                      # Project overview and user guide
 ```
+
+</details>
 
 ---
 
