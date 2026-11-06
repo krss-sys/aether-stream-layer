@@ -209,3 +209,7 @@ How to read it: **PID `1000`** is the main thread (accept, spawn). **TID `1001`*
 
 * **Multi-threading verification:** the `-f` flag traced thread creation via `clone3()`, confirming that each client connection is handed off to a separate worker thread, away from the accept loop.
 * **Resource hygiene:** confirmed `close()` on `client_fd` upon client disconnection, consistent with the `FileDescriptor` RAII wrapper. To rule out fd leaks more rigorously, also check `ls /proc/<pid>/fd` or `lsof -p <pid>` after many clients have disconnected.
+
+---
+
+> **Historical document.** The thread-per-connection architecture described here was replaced by ThreadPool in Phase 3.
