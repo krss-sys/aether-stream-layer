@@ -20,8 +20,10 @@ TcpServer::TcpServer(uint16_t port) : port_(port) {}
 
 volatile std::sig_atomic_t g_stop = 0;
 
+namespace {
 void handle_signal(int) {
     g_stop = 1;
+}
 }
 
 void TcpServer::setup_signals() {
