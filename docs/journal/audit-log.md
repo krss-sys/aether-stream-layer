@@ -10,3 +10,15 @@
 - Verified 5 critical links with grep: g_stop (#2), handle_echo (#3), kMaxFrameSize (#5), setup_signals (#1), pop_for (#8).
 - No code changes.
 
+## Day 3 — 2026-11-06
+- #9: removed Zone.Identifier, updated .gitignore.
+- #10: added historical note to phase-1.md.
+- #15: removed broken demo.gif link.
+- #19: renamed project to aether-stream-layer.
+- #17: removed asm-generic include.
+- #7: fixed docs phase-2/3 (recv_some, cv_, q_, [&]).
+- #6: aligned PROTOCOL.md with v0 implementation.
+- #18: moved handle_signal to anonymous namespace.
+- #16: added comment on manual join.
+- #14: fixed include in test_queue.cpp.
+- Tests: pass. Build: clean.
