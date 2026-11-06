@@ -30,7 +30,8 @@ public:
 
     ~ThreadPool() {
         queue_.close();
-
+        // jthread would auto-join, but we join explicitly to guarantee
+        // queue is closed and all workers finish before members destruct.
         for (auto& worker : workers_) {
             if (worker.joinable()) {
                 worker.join();
