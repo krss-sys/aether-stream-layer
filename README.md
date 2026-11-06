@@ -12,19 +12,6 @@ A lightweight, high-throughput message streaming component built in C++20 for Li
 
 [Overview](#-overview) · [Quick Start](#-quick-start) · [Testing & Diagnostics](#-testing--diagnostics) · [Project Structure](#-project-structure) · [Documentation](#-documentation--notes)
 
-</div>
-
-<!--
-  Demo GIF placeholder: after recording, put the file at docs/assets/demo.gif
-  and uncomment the block below.
-
-<div align="center">
-
-![Aether demo](docs/assets/demo.gif)
-
-</div>
--->
-
 ---
 
 ## 📖 Overview
