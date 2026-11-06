@@ -4,7 +4,6 @@
 #include "client.hpp"
 
 #include <arpa/inet.h>
-#include <asm-generic/socket.h>
 #include <csignal>
 #include <cstdint>
 #include <memory>
