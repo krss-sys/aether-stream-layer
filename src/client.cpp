@@ -131,7 +131,7 @@ std::optional<std::vector<uint8_t>> AetherClient::recv_frame() {
     }
 
     uint32_t len = ntohl(net_len);
-    if (len > kMaxFrameSize) {
+    if (len > aether::kMaxFrameSize) {
         disconnect();
         return std::nullopt;
     }

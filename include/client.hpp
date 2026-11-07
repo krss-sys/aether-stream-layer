@@ -17,8 +17,6 @@ void handle_echo(std::shared_ptr<FileDescriptor> client_fd);
 class AetherClient {
 private:
     int m_sockfd = -1;
-    // Maximum allowed frame payload size (1 MB)
-    static constexpr size_t kMaxFrameSize = 1024 * 1024;
 
 public:
     AetherClient() = default;
