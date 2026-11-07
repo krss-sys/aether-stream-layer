@@ -22,3 +22,8 @@
 - #16: added comment on manual join.
 - #14: fixed include in test_queue.cpp.
 - Tests: pass. Build: clean.
+
+## Day 4 — 2026-11-07
+- #5: unified kMaxFrameSize (removed from client.hpp).
+- #11: created config.hpp, replaced hardcoded values (port, workers, buffer, timeouts).
+- Tests: pass. Build: clean.
