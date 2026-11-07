@@ -1,4 +1,5 @@
 #include "tcp_server.hpp"
+#include "config.hpp"
 #include "file_descriptor.hpp"
 #include "thread_pool.hpp" 
 #include "client.hpp"
@@ -81,7 +82,7 @@ FileDescriptor TcpServer::accept_one(std::string& peer_ip, uint16_t& peer_port) 
     }
 
     struct timeval tv;
-    tv.tv_sec = 1;
+    tv.tv_sec = aether::config::kRecvTimeoutSec;
     tv.tv_usec = 0;
     if (::setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
         throw std::system_error(errno, std::generic_category(), "Failed to set SO_RCVTIMEO");
@@ -110,7 +111,7 @@ void TcpServer::run() {
         pfd.events = POLLIN;
         pfd.revents = 0;
 
-        int ready = poll(&pfd, 1, 500);
+        int ready = poll(&pfd, 1, aether::config::kPollTimeoutMs);
 
         if (ready < 0) {
             if (errno == EINTR) {

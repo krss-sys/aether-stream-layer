@@ -8,6 +8,7 @@
 #include <thread>
 #include <vector>
 
+#include "config.hpp"
 #include "frame.hpp"
 
 // Create a TCP socket and connect to the server at 127.0.0.1:8080
@@ -20,7 +21,7 @@ int connect_to_server() {
 
     sockaddr_in serv_addr{};
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(8080);
+    serv_addr.sin_port = htons(aether::config::kDefaultPort);
     inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
 
     // Connect to the server, exit on failure

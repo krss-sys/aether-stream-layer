@@ -1,4 +1,5 @@
 #include "client.hpp"
+#include "config.hpp"
 #include "net_io.hpp"
 #include "frame.hpp"
 #include "logger.hpp"
@@ -15,7 +16,7 @@ namespace aether {
 void handle_echo(std::shared_ptr<FileDescriptor> client_fd) {
     ConnectionGuard guard;
     FrameDecoder decoder;
-    uint8_t buffer[4096];
+    uint8_t buffer[aether::config::kRecvBufferSize];
 
     while (true) {
         ssize_t bytes_received = recv_some(client_fd->get(), buffer, sizeof(buffer));
