@@ -4,6 +4,7 @@
 #include "frame.hpp"
 #include "logger.hpp"
 #include "connection_guard.hpp"
+#include "stop_flag.hpp"
 
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -41,9 +42,11 @@ void handle_echo(std::shared_ptr<FileDescriptor> client_fd) {
         } else if (bytes_received == 0) {
             break;
         } else {
-            std::string err_msg = "Recv error: ";
-            err_msg += std::strerror(errno);
-            Logger::log(Logger::Level::Error, err_msg);
+            if (!aether::g_stop.load()) {
+                std::string err_msg = "Recv error: ";
+                err_msg += std::strerror(errno);
+                Logger::log(Logger::Level::Error, err_msg);
+            }
             break;
         }
     }

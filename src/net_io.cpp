@@ -35,9 +35,11 @@ ssize_t recv_some(int fd, void* buf, size_t cap) {
             return 0;
         } else {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                if (aether::g_stop.load()) return -1;
                 continue;
             }
             if (errno == EINTR) {
+                if (aether::g_stop.load()) return -1;
                 continue;
             }
             return -1;
@@ -60,14 +62,17 @@ bool recv_exact(int fd, void* buf, size_t n) {
             return false;
         } else {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                if (aether::g_stop.load()) return false;
                 continue;
             }
             if (errno == EINTR) {
+                if (aether::g_stop.load()) return false;
                 continue;
             }
             return false;
         }
     }
-    return true;
+    if (aether::g_stop.load()) return false;
+    return n_left == 0;
 }
 }  // namespace aether
