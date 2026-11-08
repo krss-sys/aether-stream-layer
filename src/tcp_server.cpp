@@ -3,6 +3,7 @@
 #include "file_descriptor.hpp"
 #include "thread_pool.hpp" 
 #include "client.hpp"
+#include "stop_flag.hpp"
 
 #include <arpa/inet.h>
 #include <csignal>
@@ -19,11 +20,9 @@
 namespace aether {
 TcpServer::TcpServer(uint16_t port) : port_(port) {}
 
-volatile std::sig_atomic_t g_stop = 0;
-
 namespace {
 void handle_signal(int) {
-    g_stop = 1;
+    aether::g_stop.store(true);
 }
 }
 
@@ -105,7 +104,7 @@ FileDescriptor TcpServer::accept_one(std::string& peer_ip, uint16_t& peer_port) 
 
 void TcpServer::run() {
     listen_start();
-    while (!g_stop) {
+    while (!aether::g_stop.load()) {
         struct pollfd pfd;
         pfd.fd = listen_fd_.get();
         pfd.events = POLLIN;

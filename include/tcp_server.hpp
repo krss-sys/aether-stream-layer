@@ -1,6 +1,5 @@
 #pragma once
 
-#include <csignal>
 #include <cstdint>
 #include <string>
 
@@ -9,8 +8,6 @@
 #include "thread_pool.hpp"
 
 namespace aether {
-
-extern volatile std::sig_atomic_t g_stop;
 
 class TcpServer {
    public:
