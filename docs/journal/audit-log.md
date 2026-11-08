@@ -27,3 +27,10 @@
 - #5: unified kMaxFrameSize (removed from client.hpp).
 - #11: created config.hpp, replaced hardcoded values (port, workers, buffer, timeouts).
 - Tests: pass. Build: clean.
+
+## Day 5 — 2026-11-08
+- #2: extracted g_stop to stop_flag.hpp (decouple net_io from tcp_server).
+- #29: changed volatile sig_atomic_t to std::atomic<bool>.
+- #1: called setup_signals() in main(). Ctrl+C now exits 0 (was 130).
+- Tests: pass. Build: clean.
+- Manual test: kill -INT server → exit 0, clean log.
