@@ -34,3 +34,8 @@
 - #1: called setup_signals() in main(). Ctrl+C now exits 0 (was 130).
 - Tests: pass. Build: clean.
 - Manual test: kill -INT server → exit 0, clean log.
+
+## Day 6 — 2026-11-09
+- #21: caught exceptions in worker loop. Server no longer aborts on bad task.
+- #22: log frame size (and safe preview) only, not full payload. Prevents log injection.
+- Tests: pass. Build: clean.
