@@ -1,11 +1,12 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <optional>
-#include <span>
 #include <cstdint>
 #include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <vector>
+
 #include "file_descriptor.hpp"
 
 namespace aether {
@@ -15,12 +16,12 @@ void handle_echo(std::shared_ptr<FileDescriptor> client_fd);
 
 // TCP client wrapper class for connecting and framing communication
 class AetherClient {
-private:
+   private:
     int m_sockfd = -1;
 
-public:
+   public:
     AetherClient() = default;
-    
+
     // Close the socket automatically on destruction
     ~AetherClient();
 
@@ -30,7 +31,7 @@ public:
 
     // Move constructor: take over the socket and invalidate the source
     AetherClient(AetherClient&& other) noexcept;
-    
+
     // Move assignment: release current socket, then take over the other's
     AetherClient& operator=(AetherClient&& other) noexcept;
 
@@ -47,4 +48,4 @@ public:
     std::optional<std::vector<uint8_t>> recv_frame();
 };
 
-} // namespace aether
+}  // namespace aether

@@ -1,30 +1,30 @@
 #include "tcp_server.hpp"
-#include "config.hpp"
-#include "file_descriptor.hpp"
-#include "thread_pool.hpp" 
-#include "client.hpp"
-#include "stop_flag.hpp"
 
 #include <arpa/inet.h>
-#include <csignal>
-#include <cstdint>
-#include <memory>
 #include <netinet/in.h>
+#include <poll.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <poll.h>
+
 #include <cerrno>
+#include <csignal>
+#include <cstdint>
+#include <memory>
 #include <system_error>
+
+#include "client.hpp"
+#include "config.hpp"
+#include "file_descriptor.hpp"
+#include "stop_flag.hpp"
+#include "thread_pool.hpp"
 
 namespace aether {
 TcpServer::TcpServer(uint16_t port) : port_(port) {}
 
 namespace {
-void handle_signal(int) {
-    aether::g_stop.store(true);
-}
-}
+void handle_signal(int) { aether::g_stop.store(true); }
+}  // namespace
 
 void TcpServer::setup_signals() {
     struct sigaction sa;
@@ -114,7 +114,7 @@ void TcpServer::run() {
 
         if (ready < 0) {
             if (errno == EINTR) {
-                continue; 
+                continue;
             }
             break;
         }
@@ -128,9 +128,7 @@ void TcpServer::run() {
 
             auto conn_ptr = std::make_shared<FileDescriptor>(std::move(client_fd));
 
-            pool_.submit([conn_ptr]() {
-                handle_echo(conn_ptr);
-            });
+            pool_.submit([conn_ptr]() { handle_echo(conn_ptr); });
         }
     }
 }

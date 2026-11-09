@@ -1,16 +1,16 @@
-#include "thread_pool.hpp"
 #include <gtest/gtest.h>
+
 #include <atomic>
 #include <chrono>
+
+#include "thread_pool.hpp"
 
 TEST(ThreadPoolTest, Submit1000TasksAndVerify) {
     aether::ThreadPool pool(4);
     std::atomic<int> counter{0};
 
     for (int i = 0; i < 1000; ++i) {
-        pool.submit([&counter]() {
-            counter.fetch_add(1, std::memory_order_relaxed);
-        });
+        pool.submit([&counter]() { counter.fetch_add(1, std::memory_order_relaxed); });
     }
 
     // Wait for all tasks to complete by letting pool go out of scope or sleeping briefly
@@ -32,19 +32,15 @@ TEST(ThreadPoolTest, SingleThreadAndImmediateDestruction) {
     {
         aether::ThreadPool pool(1);
         std::atomic<int> flag{0};
-        pool.submit([&flag]() {
-            flag.store(1, std::memory_order_relaxed);
-        });
-    } 
+        pool.submit([&flag]() { flag.store(1, std::memory_order_relaxed); });
+    }
 
     {
         aether::ThreadPool pool(2);
         for (int i = 0; i < 10; ++i) {
-            pool.submit([]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            });
+            pool.submit([]() { std::this_thread::sleep_for(std::chrono::milliseconds(1)); });
         }
-    } 
+    }
 
     SUCCEED();
 }

@@ -1,8 +1,10 @@
 #include "net_io.hpp"
-#include "stop_flag.hpp"
+
 #include <sys/socket.h>
 
 #include <cerrno>
+
+#include "stop_flag.hpp"
 
 namespace aether {
 bool send_all(int fd, const void* data, size_t len) {

@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
-#include "thread_safe_queue.hpp"
+
+#include <atomic>
 #include <thread>
 #include <vector>
-#include <atomic>
+
+#include "thread_safe_queue.hpp"
 
 // Keep existing unit tests
 TEST(ThreadSafeQueueTest, BasicPushPop) {
@@ -10,16 +12,16 @@ TEST(ThreadSafeQueueTest, BasicPushPop) {
     queue.push(42);
 
     auto popped = queue.pop();
-    
+
     ASSERT_TRUE(popped.has_value());
     EXPECT_EQ(popped.value(), 42);
 }
 
 TEST(ThreadSafeQueueTest, PopEmptyQueueWithTimeout) {
     aether::ThreadSafeQueue<int> queue;
-    
+
     auto popped = queue.pop_for(std::chrono::milliseconds(50));
-    
+
     EXPECT_FALSE(popped.has_value());
 }
 
@@ -29,7 +31,7 @@ TEST(ThreadSafeQueueTest, MPMCStressTest) {
 
     const int num_producers = 4;
     const int num_consumers = 4;
-    const int items_per_producer = 25000; // Each producer pushes 25,000 items
+    const int items_per_producer = 25000;  // Each producer pushes 25,000 items
     const uint64_t total_expected = num_producers * items_per_producer;
 
     std::atomic<uint64_t> sent_count{0};
@@ -53,7 +55,7 @@ TEST(ThreadSafeQueueTest, MPMCStressTest) {
             while (true) {
                 auto item = queue.pop();
                 if (!item.has_value()) {
-                    break; // Queue is closed and empty -> exit loop
+                    break;  // Queue is closed and empty -> exit loop
                 }
                 received_count.fetch_add(1, std::memory_order_relaxed);
             }
@@ -106,18 +108,20 @@ TEST(ThreadSafeQueueTest, PopForTimeoutOnEmptyQueue) {
     aether::ThreadSafeQueue<int> queue;
 
     auto start_time = std::chrono::steady_clock::now();
-    
+
     // Try to pop with a 50ms timeout on an empty queue
     auto popped = queue.pop_for(std::chrono::milliseconds(50));
-    
+
     auto end_time = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+    auto elapsed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
 
     // Should return no value after timing out
     EXPECT_FALSE(popped.has_value());
-    
-    // Ensure it actually waited roughly around the specified timeout duration (allow some system jitter)
-    EXPECT_GE(elapsed, 40); // At least close to 50ms
+
+    // Ensure it actually waited roughly around the specified timeout duration (allow some system
+    // jitter)
+    EXPECT_GE(elapsed, 40);  // At least close to 50ms
 }
 
 // Test that pop_for successfully retrieves an item if pushed before timeout expires

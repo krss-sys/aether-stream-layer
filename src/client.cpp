@@ -1,16 +1,18 @@
 #include "client.hpp"
-#include "config.hpp"
-#include "net_io.hpp"
-#include "frame.hpp"
-#include "logger.hpp"
-#include "connection_guard.hpp"
-#include "stop_flag.hpp"
 
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <cstring>
+
 #include <cerrno>
+#include <cstring>
+
+#include "config.hpp"
+#include "connection_guard.hpp"
+#include "frame.hpp"
+#include "logger.hpp"
+#include "net_io.hpp"
+#include "stop_flag.hpp"
 
 namespace aether {
 
@@ -54,12 +56,9 @@ void handle_echo(std::shared_ptr<FileDescriptor> client_fd) {
 
 // AetherClient implementation
 
-AetherClient::~AetherClient() {
-    disconnect();
-}
+AetherClient::~AetherClient() { disconnect(); }
 
-AetherClient::AetherClient(AetherClient&& other) noexcept
-    : m_sockfd(other.m_sockfd) {
+AetherClient::AetherClient(AetherClient&& other) noexcept : m_sockfd(other.m_sockfd) {
     other.m_sockfd = -1;
 }
 
@@ -148,4 +147,4 @@ std::optional<std::vector<uint8_t>> AetherClient::recv_frame() {
     return payload;
 }
 
-} // namespace aether
+}  // namespace aether
