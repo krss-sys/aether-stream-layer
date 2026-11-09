@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cerrno>
 #include <cstring>
 
@@ -27,10 +28,19 @@ void handle_echo(std::shared_ptr<FileDescriptor> client_fd) {
         if (bytes_received > 0) {
             decoder.feed(buffer, static_cast<size_t>(bytes_received));
             while (auto frame = decoder.next()) {
-                std::string msg(frame->begin(), frame->end());
-                Logger::log(Logger::Level::Info, "Received frame: " + msg);
-                auto wire_bytes = encode_frame(*frame);
+                // Tạo preview: tối đa 64 byte, thay ký tự điều khiển bằng '?'
+                std::string preview;
+                size_t preview_len = std::min<size_t>(frame->size(), 64);
+                for (size_t i = 0; i < preview_len; ++i) {
+                    char c = static_cast<char>((*frame)[i]);
+                    preview += (c >= 32 && c < 127) ? c : '?';
+                }
 
+                Logger::log(Logger::Level::Info,
+                            "Received frame, size = " + std::to_string(frame->size()) +
+                                ", preview = " + preview);
+
+                auto wire_bytes = encode_frame(*frame);
                 bool ok = send_all(client_fd->get(), wire_bytes.data(), wire_bytes.size());
                 if (!ok) {
                     Logger::log(Logger::Level::Error, "Send error, closing connection");
@@ -45,9 +55,8 @@ void handle_echo(std::shared_ptr<FileDescriptor> client_fd) {
             break;
         } else {
             if (!aether::g_stop.load()) {
-                std::string err_msg = "Recv error: ";
-                err_msg += std::strerror(errno);
-                Logger::log(Logger::Level::Error, err_msg);
+                Logger::log(Logger::Level::Error,
+                            "Recv error: " + std::string(std::strerror(errno)));
             }
             break;
         }
@@ -107,7 +116,7 @@ bool AetherClient::send_frame(std::span<const uint8_t> frame_data) {
     if (m_sockfd < 0) return false;
 
     uint32_t payload_len = static_cast<uint32_t>(frame_data.size());
-    if (payload_len > kMaxFrameSize) {
+    if (payload_len > aether::kMaxFrameSize) {
         return false;
     }
 
