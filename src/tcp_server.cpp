@@ -10,7 +10,9 @@
 #include <cerrno>
 #include <csignal>
 #include <cstdint>
+#include <cstring>
 #include <memory>
+#include <stdexcept>
 #include <system_error>
 
 #include "client.hpp"
@@ -116,7 +118,8 @@ void TcpServer::run() {
             if (errno == EINTR) {
                 continue;
             }
-            break;
+            Logger::log(Logger::Level::Error, std::string("poll failed: ") + std::strerror(errno));
+            throw std::runtime_error("poll failed");
         }
         if (ready == 0) {
             continue;
@@ -124,10 +127,19 @@ void TcpServer::run() {
         if (pfd.revents & POLLIN) {
             std::string client_ip;
             uint16_t client_port = 0;
-            FileDescriptor client_fd = accept_one(client_ip, client_port);
+            FileDescriptor client_fd;  // khai báo ở đây, bên ngoài try
+
+            try {
+                client_fd = accept_one(client_ip, client_port);
+            } catch (const std::system_error& e) {
+                Logger::log(Logger::Level::Error, std::string("accept failed: ") + e.what());
+                if (e.code().value() == EMFILE) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+                continue;  // bỏ qua kết nối lỗi, tiếp tục vòng lặp
+            }
 
             auto conn_ptr = std::make_shared<FileDescriptor>(std::move(client_fd));
-
             pool_.submit([conn_ptr]() { handle_echo(conn_ptr); });
         }
     }
