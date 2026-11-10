@@ -39,3 +39,10 @@
 - #21: caught exceptions in worker loop. Server no longer aborts on bad task.
 - #22: log frame size (and safe preview) only, not full payload. Prevents log injection.
 - Tests: pass. Build: clean.
+
+## Day 7 — 2026-11-10
+- #12: accept errors logged, loop continues (sleep 100ms on EMFILE).
+- #28: poll errors logged, throws instead of silent break.
+- #20: FileDescriptor wraps fd immediately after accept (RAII).
+- #23: log peer ip:port on connect.
+- Tests: pass. Build: clean.
