@@ -70,26 +70,28 @@ void TcpServer::listen_start() {
 }
 
 FileDescriptor TcpServer::accept_one(std::string& peer_ip, uint16_t& peer_port) {
-    // Structure to hold client address info populated by the kernel
     sockaddr_in client_addr{};
     socklen_t client_len = sizeof(client_addr);
 
-    // 1. Accept an incoming connection and get a dedicated socket descriptor
+    // 1. Accept
     int client_fd =
         ::accept(listen_fd_.get(), reinterpret_cast<sockaddr*>(&client_addr), &client_len);
-
     if (client_fd < 0) {
         throw std::system_error(errno, std::generic_category(), "accept failed");
     }
 
+    // 2. Wrap into RAII immediately (fix #20)
+    FileDescriptor fd(client_fd);
+
+    // 3. Set socket options using fd.get()
     struct timeval tv;
     tv.tv_sec = aether::config::kRecvTimeoutSec;
     tv.tv_usec = 0;
-    if (::setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+    if (::setsockopt(fd.get(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
         throw std::system_error(errno, std::generic_category(), "Failed to set SO_RCVTIMEO");
     }
 
-    // 2. Convert binary IP address to human-readable string (e.g., "127.0.0.1")
+    // 4. Convert IP
     char ip_str[INET_ADDRSTRLEN];
     if (::inet_ntop(AF_INET, &(client_addr.sin_addr), ip_str, sizeof(ip_str)) != nullptr) {
         peer_ip = ip_str;
@@ -97,11 +99,11 @@ FileDescriptor TcpServer::accept_one(std::string& peer_ip, uint16_t& peer_port) 
         peer_ip = "unknown";
     }
 
-    // 3. Convert port from Network Byte Order (Big-Endian) to Host Byte Order (Little-Endian)
+    // 5. Convert port
     peer_port = ntohs(client_addr.sin_port);
 
-    // 4. Wrap raw socket handle in RAII FileDescriptor for automatic resource management
-    return FileDescriptor(client_fd);
+    // 6. Return the RAII wrapper
+    return fd;
 }
 
 void TcpServer::run() {
@@ -138,6 +140,8 @@ void TcpServer::run() {
                 }
                 continue;  // bỏ qua kết nối lỗi, tiếp tục vòng lặp
             }
+            Logger::log(Logger::Level::Info, "Accepted connection from " + client_ip + ":" +
+                                                 std::to_string(client_port));
 
             auto conn_ptr = std::make_shared<FileDescriptor>(std::move(client_fd));
             pool_.submit([conn_ptr]() { handle_echo(conn_ptr); });
