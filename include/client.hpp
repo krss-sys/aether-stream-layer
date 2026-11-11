@@ -1,18 +1,12 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
 #include <optional>
 #include <span>
 #include <string>
 #include <vector>
 
-#include "file_descriptor.hpp"
-
 namespace aether {
-
-// Handle incoming client echo requests
-void handle_echo(std::shared_ptr<FileDescriptor> client_fd);
 
 // TCP client wrapper class for connecting and framing communication
 class AetherClient {

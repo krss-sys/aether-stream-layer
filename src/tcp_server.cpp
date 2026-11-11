@@ -15,7 +15,7 @@
 #include <stdexcept>
 #include <system_error>
 
-#include "client.hpp"
+#include "session.hpp"
 #include "config.hpp"
 #include "file_descriptor.hpp"
 #include "stop_flag.hpp"
