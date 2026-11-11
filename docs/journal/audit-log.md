@@ -46,3 +46,8 @@
 - #20: FileDescriptor wraps fd immediately after accept (RAII).
 - #23: log peer ip:port on connect.
 - Tests: pass. Build: clean.
+
+## Day 8 — 2026-11-11
+- #3: extracted handle_echo to session.hpp/.cpp. client.cpp now only AetherClient.
+- Cleaned unused includes.
+- Tests: pass. Build: clean.
