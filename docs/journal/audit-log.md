@@ -51,3 +51,9 @@
 - #3: extracted handle_echo to session.hpp/.cpp. client.cpp now only AetherClient.
 - Cleaned unused includes.
 - Tests: pass. Build: clean.
+
+## Day 9 — 2026-11-12
+- #4: AetherClient uses FileDescriptor (RAII) instead of int m_sockfd.
+- #25: connect() calls disconnect() first. No fd leak on reconnect.
+- Added test_client_reconnect.cpp.
+- Tests: pass. Build: clean.
