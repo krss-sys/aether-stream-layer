@@ -6,12 +6,14 @@
 #include <string>
 #include <vector>
 
+#include "file_descriptor.hpp"
+
 namespace aether {
 
 // TCP client wrapper class for connecting and framing communication
 class AetherClient {
    private:
-    int m_sockfd = -1;
+    FileDescriptor m_sockfd;
 
    public:
     AetherClient() = default;
