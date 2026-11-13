@@ -15,7 +15,23 @@ int main(int argc, char* argv[]) {
     }
 
     std::string ip_address = argv[1];
-    uint16_t port = static_cast<uint16_t>(std::stoi(argv[2]));
+
+    int port_int = 0;
+    try {
+        port_int = std::stoi(argv[2]);
+    } catch (const std::invalid_argument&) {
+        std::cerr << "Error: port must be a number\n";
+        return 1;
+    } catch (const std::out_of_range&) {
+        std::cerr << "Error: port out of range\n";
+        return 1;
+    }
+    if (port_int < 1 || port_int > 65535) {
+        std::cerr << "Error: port must be between 1 and 65535\n";
+        return 1;
+    }
+    uint16_t port = static_cast<uint16_t>(port_int);
+
     std::string message = argv[3];
 
     // 2. Initialize AetherClient (automatic socket lifecycle management via RAII)
