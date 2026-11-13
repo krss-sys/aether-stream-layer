@@ -57,3 +57,10 @@
 - #25: connect() calls disconnect() first. No fd leak on reconnect.
 - Added test_client_reconnect.cpp.
 - Tests: pass. Build: clean.
+
+## Day 10 — 2026-11-13
+- #24: cli validates port (1-65535), no abort on bad input.
+- #26: fragmentation test now sleeps 50ms between bytes, sets TCP_NODELAY, reads echo.
+- #27, #6, #13, #8: recorded in DECISIONS.md.
+- Tests: pass. Build: clean.
+- Manual test: torture test PASS, cli rejects bad port.
