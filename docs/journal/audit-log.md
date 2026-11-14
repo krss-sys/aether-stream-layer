@@ -64,3 +64,8 @@
 - #27, #6, #13, #8: recorded in DECISIONS.md.
 - Tests: pass. Build: clean.
 - Manual test: torture test PASS, cli rejects bad port.
+
+## Day 11 — 2026-11-14
+- Final verify: 3 builds clean (normal, ASan, TSan). All tests pass.
+- Updated TODO.md, DECISIONS.md, inventory.md.
+- Tagged v0.3-audited.
