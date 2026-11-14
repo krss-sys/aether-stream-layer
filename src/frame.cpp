@@ -10,7 +10,7 @@ namespace aether {
 
 std::vector<uint8_t> encode_frame(std::span<const uint8_t> payload) {
     // Check size limit (Mitigate DoS attacks > 1 MiB)
-    if (payload.size() > kMaxFrameSize) {
+    if (payload.size() > aether::kMaxFrameSize) {
         throw std::runtime_error("Payload size exceeds maximum frame size limit (1 MiB)");
     }
 
@@ -46,7 +46,7 @@ std::optional<std::vector<uint8_t>> FrameDecoder::next() {
     std::memcpy(&len, buf_.data(), 4);
     len = ntohl(len);  // Convert from Network to Host byte order
 
-    if (len > kMaxFrameSize) {
+    if (len > aether::kMaxFrameSize) {
         error_ = true;
         return std::nullopt;
     }

@@ -7,7 +7,9 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <netinet/tcp.h>
 
+#include "config.hpp"
 #include "frame.hpp"
 
 // Create a TCP socket and connect to the server at 127.0.0.1:8080
@@ -20,7 +22,7 @@ int connect_to_server() {
 
     sockaddr_in serv_addr{};
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(8080);
+    serv_addr.sin_port = htons(aether::config::kDefaultPort);
     inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
 
     // Connect to the server, exit on failure
@@ -74,14 +76,24 @@ bool run_coalescing_test() {
 bool run_fragmentation_test() {
     std::cout << "\n[TEST 2] Running Packet Fragmentation Test...\n";
     int sock = connect_to_server();
+    if (sock < 0) {
+        std::cerr << "[ERROR] Failed to connect to server\n";
+        return false;
+    }
+
+    // Enable TCP_NODELAY to prevent Nagle's algorithm from coalescing bytes
+    int flag = 1;
+    if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag)) < 0) {
+        std::cerr << "[WARN] Failed to set TCP_NODELAY\n";
+    }
 
     std::string msg = "Slow Fragmented Frame";
     auto raw_frame = aether::encode_frame(std::vector<uint8_t>(msg.begin(), msg.end()));
 
     std::cout << "[INFO] Sending " << raw_frame.size()
-              << " bytes, 1byte at a time (50ms delay)...\n";
+              << " bytes, 1 byte at a time (50ms delay)...\n";
 
-    // Send each byte separately
+    // Send each byte separately with 50ms delay
     bool ok = true;
     for (size_t i = 0; i < raw_frame.size(); ++i) {
         ssize_t sent = ::send(sock, &raw_frame[i], 1, 0);
@@ -90,13 +102,37 @@ bool run_fragmentation_test() {
             ok = false;
             break;
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
-    if (ok) std::cout << "[PASS] Fragmented frame fully sent\n";
 
-    // Small delay before closing the socket
-    std::this_thread::sleep_for(std::chrono::microseconds(100));
+    if (!ok) {
+        close(sock);
+        return false;
+    }
+
+    // Read back the echoed frame (exact bytes)
+    std::vector<uint8_t> echo(raw_frame.size());
+    size_t got = 0;
+    while (got < echo.size()) {
+        ssize_t n = ::recv(sock, echo.data() + got, echo.size() - got, 0);
+        if (n <= 0) {
+            std::cerr << "[ERROR] Recv failed or EOF at byte " << got << "\n";
+            close(sock);
+            return false;
+        }
+        got += n;
+    }
+
+    // Compare
+    if (echo == raw_frame) {
+        std::cout << "[PASS] Fragmented frame echoed correctly\n";
+    } else {
+        std::cout << "[FAIL] Echo mismatch (got " << echo.size() << " bytes, expected "
+                  << raw_frame.size() << ")\n";
+        ok = false;
+    }
+
     close(sock);
-
     return ok;
 }
 

@@ -1,9 +1,10 @@
 #include "net_io.hpp"
-#include "tcp_server.hpp"
 
 #include <sys/socket.h>
 
 #include <cerrno>
+
+#include "stop_flag.hpp"
 
 namespace aether {
 bool send_all(int fd, const void* data, size_t len) {
@@ -27,7 +28,7 @@ bool send_all(int fd, const void* data, size_t len) {
 }
 
 ssize_t recv_some(int fd, void* buf, size_t cap) {
-    while (!g_stop) {
+    while (!aether::g_stop.load()) {
         ssize_t n = ::recv(fd, buf, cap, 0);
 
         if (n > 0) {
@@ -36,9 +37,11 @@ ssize_t recv_some(int fd, void* buf, size_t cap) {
             return 0;
         } else {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                if (aether::g_stop.load()) return -1;
                 continue;
             }
             if (errno == EINTR) {
+                if (aether::g_stop.load()) return -1;
                 continue;
             }
             return -1;
@@ -51,7 +54,7 @@ bool recv_exact(int fd, void* buf, size_t n) {
     char* ptr = static_cast<char*>(buf);
     size_t n_left = n;
 
-    while (n_left > 0 && !g_stop) {
+    while (n_left > 0 && !aether::g_stop.load()) {
         ssize_t received = ::recv(fd, ptr, n_left, 0);
 
         if (received > 0) {
@@ -61,14 +64,17 @@ bool recv_exact(int fd, void* buf, size_t n) {
             return false;
         } else {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                if (aether::g_stop.load()) return false;
                 continue;
             }
             if (errno == EINTR) {
+                if (aether::g_stop.load()) return false;
                 continue;
             }
             return false;
         }
     }
-    return true;
+    if (aether::g_stop.load()) return false;
+    return n_left == 0;
 }
 }  // namespace aether

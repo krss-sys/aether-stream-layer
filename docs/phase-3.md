@@ -15,7 +15,7 @@
 Concurrency is handled by a **Task-Queue ThreadPool**: a fixed number of worker threads, each running an infinite loop that pulls tasks from a thread-safe queue (`ThreadSafeQueue`).
 
 - **Task submission:** when a client connects (`TcpServer`), a task that handles the connection lifecycle (`handle_echo`) is `submit`-ted to the `ThreadPool`.
-- **Blocking execution:** the worker that picks up the task owns the **entire** connection lifetime — read a frame, process it, echo it back — in a loop until the client disconnects. The frame reading inside that loop uses the `recv_exact` approach from Phase 2 (Day 21) and the validation-before-allocation rule from Phase 2 (Day 23).
+- **Blocking execution:** the worker that picks up the task owns the **entire** connection lifetime — read a frame using `recv_some` (since it doesn't know the payload size in advance), process it, echo it back — in a loop until the client disconnects. The frame reading inside that loop uses the `recv_some` approach from Phase 2 (Day 21) and the validation-before-allocation rule from Phase 2 (Day 23).
 
 ```mermaid
 flowchart LR
@@ -60,7 +60,7 @@ To confirm the limit of the blocking model, the pool was run with a deliberately
 ### 4. Cross-References
 
 - **[Phase 2](phase-2.md), Day 14 §2** — `kMaxFrameSize` (1 MiB), which bounds per-connection memory.
-- **[Phase 2](phase-2.md), Day 21 §1–§2** — `recv_exact`, used by the per-connection loop to read frames.
+- **[Phase 2](phase-2.md), Day 21 §1–§2** — `recv_some`, used by the per-connection loop to read frames.
 - **[Phase 2](phase-2.md), Day 23 §1** — validation-before-allocation, applied on every frame a worker reads.
 
 ---
@@ -71,12 +71,12 @@ To confirm the limit of the blocking model, the pool was run with a deliberately
 
 Concurrency synchronization relies on a thread-safe queue (`ThreadSafeQueue`) backed by a mutex and a condition variable (`std::condition_variable`).
 
-- **`std::unique_lock` vs `std::lock_guard` in `wait`:** `std::unique_lock` is mandatory during `cond_.wait()` because the waiting thread **must release the mutex** while sleeping so other threads can push new tasks into the queue. `std::lock_guard` lacks manual unlock/lock capabilities and would cause a deadlock if used inside a condition variable wait.
-- **Spurious Wakeup Mitigation:** The lambda predicate passed to `wait` (`[this]() { return !queue_.empty() || closed_; }`) protects against spurious wakeups (when a thread wakes up without an explicit notification). If the queue is still empty and not closed, the thread immediately goes back to sleep.
+- **`std::unique_lock` vs `std::lock_guard` in `wait`:** `std::unique_lock` is mandatory during `cv_.wait()` because the waiting thread **must release the mutex** while sleeping so other threads can push new tasks into the queue. `std::lock_guard` lacks manual unlock/lock capabilities and would cause a deadlock if used inside a condition variable wait.
+- **Spurious Wakeup Mitigation:** The lambda predicate passed to `wait` (`[&]() { return !q_.empty() || closed_; }`) protects against spurious wakeups (when a thread wakes up without an explicit notification). If the queue is still empty and not closed, the thread immediately goes back to sleep.
 
 ### 2. ThreadPool Destructor & RAII Lifecycle
 
-- **Drain-Join Pattern:** Upon destruction, the `ThreadPool` signals the work queue to close (`queue_.close()`), waking up any blocked worker threads, and then iterates through all worker threads to invoke `.join()`, preventing `std::terminate` and ensuring clean exit.
+- **Drain-Join Pattern:** Upon destruction, the `ThreadPool` signals the work queue to close (`q_.close()`), waking up any blocked worker threads, and then iterates through all worker threads to invoke `.join()`, preventing `std::terminate` and ensuring clean exit.
 - **RAII Enforcement:** Managing resources through object lifecycles ensures that network file descriptors (`listen_fd`) and worker threads are automatically torn down and cleaned up when the server shuts down.
 
 ### 3. Sanitizers & Concurrency Verification

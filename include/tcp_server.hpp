@@ -1,15 +1,13 @@
 #pragma once
 
-#include <csignal>
 #include <cstdint>
 #include <string>
 
+#include "config.hpp"
 #include "file_descriptor.hpp"
 #include "thread_pool.hpp"
 
 namespace aether {
-
-extern volatile std::sig_atomic_t g_stop;
 
 class TcpServer {
    public:
@@ -28,7 +26,7 @@ class TcpServer {
    private:
     uint16_t port_;
     FileDescriptor listen_fd_;  // RAII wrapper for the listening socket file descriptor
-    ThreadPool pool_{8};
+    ThreadPool pool_{aether::config::kWorkerCount};
 };
 
 }  // namespace aether

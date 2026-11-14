@@ -1,28 +1,23 @@
 #pragma once
 
-#include <string>
-#include <vector>
+#include <cstdint>
 #include <optional>
 #include <span>
-#include <cstdint>
-#include <memory>
+#include <string>
+#include <vector>
+
 #include "file_descriptor.hpp"
 
 namespace aether {
 
-// Handle incoming client echo requests
-void handle_echo(std::shared_ptr<FileDescriptor> client_fd);
-
 // TCP client wrapper class for connecting and framing communication
 class AetherClient {
-private:
-    int m_sockfd = -1;
-    // Maximum allowed frame payload size (1 MB)
-    static constexpr size_t kMaxFrameSize = 1024 * 1024;
+   private:
+    FileDescriptor m_sockfd;
 
-public:
+   public:
     AetherClient() = default;
-    
+
     // Close the socket automatically on destruction
     ~AetherClient();
 
@@ -32,7 +27,7 @@ public:
 
     // Move constructor: take over the socket and invalidate the source
     AetherClient(AetherClient&& other) noexcept;
-    
+
     // Move assignment: release current socket, then take over the other's
     AetherClient& operator=(AetherClient&& other) noexcept;
 
@@ -49,4 +44,4 @@ public:
     std::optional<std::vector<uint8_t>> recv_frame();
 };
 
-} // namespace aether
+}  // namespace aether
