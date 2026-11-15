@@ -1,0 +1,38 @@
+name: Static Analysis
+
+on:
+  push:
+    branches: [ main, audit/clean ]
+  pull_request:
+    branches: [ main, audit/clean ]
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Install tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake g++ ninja-build clang-tidy cppcheck
+
+    - name: Configure (xuất compile_commands.json)
+      run: cmake -B build -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+    - name: cppcheck
+      run: >
+        cppcheck --enable=warning,performance,portability
+        --std=c++20 --inline-suppr
+        -I include src tools
+
+    - name: clang-tidy
+      run: >
+        clang-tidy -p build
+        $(git ls-files 'src/*.cpp' 'tools/*.cpp')

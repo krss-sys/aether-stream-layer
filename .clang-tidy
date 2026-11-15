@@ -1,0 +1,1 @@
+Checks: 'bugprone-*,concurrency-*,performance-*,modernize-*,-modernize-use-trailing-return-type'

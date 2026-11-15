@@ -13,7 +13,7 @@ concurrency:
 jobs:
   build:
     name: ${{ matrix.name }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     strategy:
@@ -34,7 +34,7 @@ jobs:
             sanitize: undefined
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: Install dependencies
       run: |
