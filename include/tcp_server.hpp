@@ -11,10 +11,8 @@ namespace aether {
 
 class TcpServer {
    public:
-    // Construct a TCP server bound to a specific port
     explicit TcpServer(uint16_t port);
 
-    // Initialize socket, set socket options, bind to port, and start listening
     void listen_start();
 
     FileDescriptor accept_one(std::string& peer_ip, uint16_t& peer_port);
@@ -25,7 +23,7 @@ class TcpServer {
 
    private:
     uint16_t port_;
-    FileDescriptor listen_fd_;  // RAII wrapper for the listening socket file descriptor
+    FileDescriptor listen_fd_;
     ThreadPool pool_{aether::config::kWorkerCount};
 };
 

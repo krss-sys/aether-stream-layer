@@ -5,12 +5,9 @@
 #include <cstddef>
 
 namespace aether {
-// Sends all data (handles partial sends, MSG_NOSIGNAL, and EINTR)
 bool send_all(int fd, const void* data, size_t len);
 
-// Receives data safely (retries on EINTR)
 ssize_t recv_some(int fd, void* buf, size_t cap);
 
-// Receives exactly n bytes (loops until full or error/EOF, retries on EINTR)
 bool recv_exact(int fd, void* buf, size_t n);
 }  // namespace aether

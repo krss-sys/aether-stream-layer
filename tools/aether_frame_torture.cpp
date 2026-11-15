@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -7,12 +8,10 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <netinet/tcp.h>
 
 #include "config.hpp"
 #include "frame.hpp"
 
-// Create a TCP socket and connect to the server at 127.0.0.1:8080
 int connect_to_server() {
     int sock = ::socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
@@ -25,7 +24,6 @@ int connect_to_server() {
     serv_addr.sin_port = htons(aether::config::kDefaultPort);
     inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
 
-    // Connect to the server, exit on failure
     if (::connect(sock, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
         std::cerr << "[ERROR] Connection failed to server\n";
         close(sock);
@@ -34,7 +32,6 @@ int connect_to_server() {
     return sock;
 }
 
-// Test 1: send multiple frames in one single send() call
 bool run_coalescing_test() {
     std::cout << "[TEST] Running Packet Coalescing Test...\n";
     int sock = connect_to_server();
@@ -43,18 +40,15 @@ bool run_coalescing_test() {
     std::string msg2 = "System Programming 2";
     std::string msg3 = "C++20 Network 3";
 
-    // Encode each message into a frame
     auto raw1 = aether::encode_frame(std::vector<uint8_t>(msg1.begin(), msg1.end()));
     auto raw2 = aether::encode_frame(std::vector<uint8_t>(msg2.begin(), msg2.end()));
     auto raw3 = aether::encode_frame(std::vector<uint8_t>(msg3.begin(), msg3.end()));
 
-    // Merge all frames into one big buffer
     std::vector<uint8_t> big_buffer;
     big_buffer.insert(big_buffer.end(), raw1.begin(), raw1.end());
     big_buffer.insert(big_buffer.end(), raw2.begin(), raw2.end());
     big_buffer.insert(big_buffer.end(), raw3.begin(), raw3.end());
 
-    // Send everything in a single chunk
     ssize_t sent = ::send(sock, big_buffer.data(), big_buffer.size(), 0);
     bool ok = false;
     if (sent < 0) {
@@ -65,14 +59,12 @@ bool run_coalescing_test() {
         ok = true;
     }
 
-    // Give the server a moment to process, then close
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
     close(sock);
 
     return ok;
 }
 
-// Test 2: send one frame byte by byte to simulate fragmentation
 bool run_fragmentation_test() {
     std::cout << "\n[TEST 2] Running Packet Fragmentation Test...\n";
     int sock = connect_to_server();
@@ -81,7 +73,6 @@ bool run_fragmentation_test() {
         return false;
     }
 
-    // Enable TCP_NODELAY to prevent Nagle's algorithm from coalescing bytes
     int flag = 1;
     if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag)) < 0) {
         std::cerr << "[WARN] Failed to set TCP_NODELAY\n";
@@ -93,7 +84,6 @@ bool run_fragmentation_test() {
     std::cout << "[INFO] Sending " << raw_frame.size()
               << " bytes, 1 byte at a time (50ms delay)...\n";
 
-    // Send each byte separately with 50ms delay
     bool ok = true;
     for (size_t i = 0; i < raw_frame.size(); ++i) {
         ssize_t sent = ::send(sock, &raw_frame[i], 1, 0);
@@ -110,7 +100,6 @@ bool run_fragmentation_test() {
         return false;
     }
 
-    // Read back the echoed frame (exact bytes)
     std::vector<uint8_t> echo(raw_frame.size());
     size_t got = 0;
     while (got < echo.size()) {
@@ -123,7 +112,6 @@ bool run_fragmentation_test() {
         got += n;
     }
 
-    // Compare
     if (echo == raw_frame) {
         std::cout << "[PASS] Fragmented frame echoed correctly\n";
     } else {
@@ -136,12 +124,10 @@ bool run_fragmentation_test() {
     return ok;
 }
 
-// Test 3: send a malicious frame with an invalid huge length
 bool run_malicious_test() {
     std::cout << "\n[TEST 3] Running Packet Malicious Test...\n";
     int sock = connect_to_server();
 
-    // Fake frame with length = 0xFFFFFFFF
     std::vector<uint8_t> badFrame = {0xFF, 0xFF, 0xFF, 0xFF, 'a', 'b'};
     ssize_t sent = ::send(sock, badFrame.data(), badFrame.size(), 0);
     if (sent < 0) {
@@ -151,18 +137,15 @@ bool run_malicious_test() {
     }
     std::cout << "Already sent the read command frame (len = 0xFFFFFFFF)\n";
 
-    // Try to read; server should close the connection
     char buf[16];
     ssize_t n = recv(sock, buf, sizeof(buf), 0);
     std::this_thread::sleep_for(std::chrono::seconds(2));
     ::close(sock);
 
-    // n == 0 means server closed the connection
     if (n == 0) {
         std::cout << "[PASS] Server has closed the connection (defense succeeded)\n";
         return true;
     }
-    // n < 0 means recv error, also acceptable as defense
     if (n < 0) {
         std::cout << "[PASS] Server has closed the connection (recv error)\n\n";
         return true;
@@ -171,7 +154,6 @@ bool run_malicious_test() {
     return false;
 }
 
-// Run all tests and report the overall result
 int main() {
     std::cout << "=== AETHER FRAME TORTURE TEST ===\n";
 

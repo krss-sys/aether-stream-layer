@@ -22,7 +22,6 @@ void handle_echo(std::shared_ptr<FileDescriptor> client_fd) {
         if (bytes_received > 0) {
             decoder.feed(buffer, static_cast<size_t>(bytes_received));
             while (auto frame = decoder.next()) {
-                // Tạo preview: tối đa 64 byte, thay ký tự điều khiển bằng '?'
                 std::string preview;
                 size_t preview_len = std::min<size_t>(frame->size(), 64);
                 for (size_t i = 0; i < preview_len; ++i) {

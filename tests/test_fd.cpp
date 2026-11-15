@@ -5,10 +5,8 @@
 
 #include "file_descriptor.hpp"
 
-// Test 1: Verify RAII wrapper over pipe(), writing and reading data
 TEST(FileDescriptorTest, PipeReadWrite) {
     int fds[2];
-    // ::pipe returns 0 on success; fds[0] is read end, fds[1] is write end
     ASSERT_EQ(::pipe(fds), 0);
 
     aether::FileDescriptor read_fd(fds[0]);
@@ -27,7 +25,6 @@ TEST(FileDescriptorTest, PipeReadWrite) {
     EXPECT_STREQ(buffer, msg);
 }
 
-// Test 2: Verify Move Semantics and release() method behavior
 TEST(FileDescriptorTest, MoveAndRelease) {
     int fds[2];
     ASSERT_EQ(::pipe(fds), 0);
@@ -35,18 +32,15 @@ TEST(FileDescriptorTest, MoveAndRelease) {
     aether::FileDescriptor fd1(fds[0]);
     int raw_fd = fd1.get();
 
-    // Move constructor: fd2 acquires ownership, fd1 is reset to -1
     aether::FileDescriptor fd2(std::move(fd1));
     EXPECT_EQ(fd1.get(), -1);
     EXPECT_FALSE(fd1.valid());
     EXPECT_EQ(fd2.get(), raw_fd);
 
-    // Release: fd2 relinquishes ownership without closing raw_fd in OS
     int released_fd = fd2.release();
     EXPECT_EQ(released_fd, raw_fd);
     EXPECT_EQ(fd2.get(), -1);
 
-    // Explicitly close the released fd to prevent resource leaks
     ::close(released_fd);
-    ::close(fds[1]);  // Close remaining write end
+    ::close(fds[1]);
 }

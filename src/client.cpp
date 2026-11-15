@@ -9,13 +9,10 @@
 #include "net_io.hpp"
 
 namespace aether {
-// AetherClient implementation
 
 AetherClient::~AetherClient() { disconnect(); }
 
-AetherClient::AetherClient(AetherClient&& other) noexcept : m_sockfd(std::move(other.m_sockfd)) {
-    // m_sockfd is a FileDescriptor, move constructor handles the transfer.
-}
+AetherClient::AetherClient(AetherClient&& other) noexcept : m_sockfd(std::move(other.m_sockfd)) {}
 
 AetherClient& AetherClient::operator=(AetherClient&& other) noexcept {
     if (this != &other) {
@@ -26,7 +23,6 @@ AetherClient& AetherClient::operator=(AetherClient&& other) noexcept {
 }
 
 bool AetherClient::connect(const std::string& host, uint16_t port) {
-    // If already connected, disconnect first (fix #25)
     if (m_sockfd.valid()) {
         disconnect();
     }
@@ -52,10 +48,7 @@ bool AetherClient::connect(const std::string& host, uint16_t port) {
     return true;
 }
 
-void AetherClient::disconnect() {
-    // FileDescriptor's reset() will close the fd automatically if valid.
-    m_sockfd.reset();
-}
+void AetherClient::disconnect() { m_sockfd.reset(); }
 
 bool AetherClient::send_frame(std::span<const uint8_t> frame_data) {
     if (!m_sockfd.valid()) return false;

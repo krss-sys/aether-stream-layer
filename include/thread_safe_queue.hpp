@@ -18,7 +18,6 @@ class ThreadSafeQueue {
    public:
     ThreadSafeQueue() = default;
 
-    // Push an element into the queue (Thread-safe)
     void push(T item) {
         {
             std::lock_guard<std::mutex> lock(mtx_);
@@ -27,7 +26,6 @@ class ThreadSafeQueue {
         cv_.notify_one();
     }
 
-    // Try to pop an element (Blocking until an element is available or closed)
     std::optional<T> pop() {
         std::unique_lock<std::mutex> lock(mtx_);
 
@@ -42,7 +40,6 @@ class ThreadSafeQueue {
         return item;
     }
 
-    // Close the queue and notify all waiting threads
     void close() {
         {
             std::lock_guard<std::mutex> lock(mtx_);
@@ -51,7 +48,6 @@ class ThreadSafeQueue {
         cv_.notify_all();
     }
 
-    // Pop an element with a timeout
     std::optional<T> pop_for(std::chrono::milliseconds timeout) {
         std::unique_lock<std::mutex> lock(mtx_);
 

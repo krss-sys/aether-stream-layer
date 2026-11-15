@@ -10,7 +10,6 @@
 
 namespace aether {
 
-// TCP client wrapper class for connecting and framing communication
 class AetherClient {
    private:
     FileDescriptor m_sockfd;
@@ -18,30 +17,21 @@ class AetherClient {
    public:
     AetherClient() = default;
 
-    // Close the socket automatically on destruction
     ~AetherClient();
 
-    // Disable copying (socket ownership must be unique)
     AetherClient(const AetherClient&) = delete;
     AetherClient& operator=(const AetherClient&) = delete;
 
-    // Move constructor: take over the socket and invalidate the source
     AetherClient(AetherClient&& other) noexcept;
 
-    // Move assignment: release current socket, then take over the other's
     AetherClient& operator=(AetherClient&& other) noexcept;
 
-    // Connect to the server at host:port; return false on any failure
     bool connect(const std::string& host, uint16_t port);
 
-    // Close the socket if it is open
     void disconnect();
 
-    // Send one frame: 4-byte length prefix followed by the payload
     bool send_frame(std::span<const uint8_t> frame_data);
 
-    // Receive one frame: read the length prefix, then the payload
     std::optional<std::vector<uint8_t>> recv_frame();
 };
-
 }  // namespace aether

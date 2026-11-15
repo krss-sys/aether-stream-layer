@@ -17,7 +17,7 @@ bool send_all(int fd, const void* data, size_t len) {
             total_sent += static_cast<size_t>(n);
         } else if (n < 0) {
             if (errno == EINTR) {
-                continue;  // Interrupted by signal -> retry
+                continue;
             }
             return false;
         } else {
