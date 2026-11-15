@@ -1,0 +1,59 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, audit/clean ]
+  pull_request:
+    branches: [ main, audit/clean ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Release
+            build_type: Release
+            sanitize: ""
+          - name: ASan
+            build_type: RelWithDebInfo
+            sanitize: address
+          - name: TSan
+            build_type: RelWithDebInfo
+            sanitize: thread
+          - name: UBSan
+            build_type: RelWithDebInfo
+            sanitize: undefined
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake g++ ninja-build
+
+    # TSan hay crash trên kernel mới do ASLR entropy quá cao
+    - name: Fix ASLR for TSan
+      if: matrix.sanitize == 'thread'
+      run: sudo sysctl vm.mmap_rnd_bits=28
+
+    - name: Configure CMake
+      run: >
+        cmake -B build -G Ninja
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DAETHER_SANITIZE=${{ matrix.sanitize }}
+
+    - name: Build
+      run: cmake --build build -j $(nproc)
+
+    - name: Run tests
+      run: ctest --test-dir build --output-on-failure --timeout 120
