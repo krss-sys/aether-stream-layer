@@ -4,5 +4,5 @@
 #include "file_descriptor.hpp"
 
 namespace aether {
-void handle_echo(std::shared_ptr<FileDescriptor> client_fd);
+void handle_echo(const std::shared_ptr<FileDescriptor>& client_fd);
 }

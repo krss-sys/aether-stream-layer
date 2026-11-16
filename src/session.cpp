@@ -2,6 +2,7 @@
 
 #include <cerrno>
 #include <cstring>
+#include <system_error>
 
 #include "config.hpp"
 #include "connection_guard.hpp"
@@ -11,7 +12,7 @@
 #include "stop_flag.hpp"
 
 namespace aether {
-void handle_echo(std::shared_ptr<FileDescriptor> client_fd) {
+void handle_echo(const std::shared_ptr<FileDescriptor>& client_fd) {
     ConnectionGuard guard;
     FrameDecoder decoder;
     uint8_t buffer[aether::config::kRecvBufferSize];
@@ -49,7 +50,7 @@ void handle_echo(std::shared_ptr<FileDescriptor> client_fd) {
         } else {
             if (!aether::g_stop.load()) {
                 Logger::log(Logger::Level::Error,
-                            "Recv error: " + std::string(std::strerror(errno)));
+                            "Recv error: " + std::system_category().message(errno));
             }
             break;
         }

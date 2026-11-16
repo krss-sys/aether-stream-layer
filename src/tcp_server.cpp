@@ -10,7 +10,6 @@
 #include <cerrno>
 #include <csignal>
 #include <cstdint>
-#include <cstring>
 #include <memory>
 #include <stdexcept>
 #include <system_error>
@@ -109,7 +108,7 @@ void TcpServer::run() {
             if (errno == EINTR) {
                 continue;
             }
-            Logger::log(Logger::Level::Error, std::string("poll failed: ") + std::strerror(errno));
+            Logger::log(Logger::Level::Error, std::string("poll failed: ") + std::system_category().message(errno));
             throw std::runtime_error("poll failed");
         }
         if (ready == 0) {
