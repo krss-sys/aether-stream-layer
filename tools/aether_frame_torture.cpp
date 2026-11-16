@@ -16,7 +16,7 @@ int connect_to_server() {
     int sock = ::socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
         std::cerr << "[ERROR] Cannot create socket\n";
-        exit(1);
+        return -1;
     }
 
     sockaddr_in serv_addr{};
@@ -27,7 +27,7 @@ int connect_to_server() {
     if (::connect(sock, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
         std::cerr << "[ERROR] Connection failed to server\n";
         close(sock);
-        exit(1);
+        return -1;
     }
     return sock;
 }
