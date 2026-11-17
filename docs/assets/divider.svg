@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 24" role="presentation" aria-hidden="true">
+<defs>
+  <linearGradient id="l" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#60a5fa" stop-opacity="0"/><stop offset=".3" stop-color="#60a5fa" stop-opacity=".7"/><stop offset=".7" stop-color="#c084fc" stop-opacity=".7"/><stop offset="1" stop-color="#c084fc" stop-opacity="0"/></linearGradient>
+  <radialGradient id="o"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#c084fc" stop-opacity="0"/></radialGradient>
+</defs>
+<rect x="40" y="11" width="920" height="2" rx="1" fill="url(#l)"/>
+<circle r="9" cy="12" fill="url(#o)"><animate attributeName="cx" values="60;940;60" dur="7s" repeatCount="indefinite" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1" keyTimes="0;.5;1"/></circle>
+<path d="M500,5 L507,12 L500,19 L493,12 z" fill="#0d1117" stroke="url(#l)" stroke-width="1.5"/>
+</svg>
