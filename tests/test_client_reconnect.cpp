@@ -1,25 +1,34 @@
 #include <dirent.h>
 #include <gtest/gtest.h>
 
-#include <string>
+#include <cstdint>
+#include <filesystem>
 
 #include "client.hpp"
 
-static int count_fds() {
+namespace {
+
+int count_fds() {
     int n = 0;
-    DIR* d = opendir("/proc/self/fd");
-    while (auto* e = readdir(d))
-        if (e->d_name[0] != '.') ++n;
-    closedir(d);
+    for (const auto& entry : std::filesystem::directory_iterator("/proc/self/fd")) {
+        if (entry.path().filename().string()[0] != '.') {
+            ++n;
+        }
+    }
     return n;
 }
 
+}  // namespace
+
 TEST(AetherClient, ReconnectNoFdLeak) {
     aether::AetherClient c;
-    int before = count_fds();
+    const int before = count_fds();
+    constexpr uint16_t kUnreachablePort = 65535;
+
     for (int i = 0; i < 5; ++i) {
-        c.connect("127.0.0.1", 65535);
+        c.connect("127.0.0.1", kUnreachablePort);
     }
-    int after = count_fds();
+
+    const int after = count_fds();
     EXPECT_LE(after - before, 1);
 }

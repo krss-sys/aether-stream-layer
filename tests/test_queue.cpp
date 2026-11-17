@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <atomic>
+#include <chrono>
+#include <cstdint>
 #include <thread>
 #include <vector>
 
@@ -30,12 +32,13 @@ TEST(ThreadSafeQueueTest, MPMCStressTest) {
     const int num_producers = 4;
     const int num_consumers = 4;
     const int items_per_producer = 25000;
-    const uint64_t total_expected = num_producers * items_per_producer;
+    const uint64_t total_expected = static_cast<uint64_t>(num_producers) * items_per_producer;
 
     std::atomic<uint64_t> sent_count{0};
     std::atomic<uint64_t> received_count{0};
 
     std::vector<std::thread> producers;
+    producers.reserve(num_producers);
     for (int i = 0; i < num_producers; ++i) {
         producers.emplace_back([&queue, &sent_count]() {
             for (int j = 0; j < items_per_producer; ++j) {
@@ -46,6 +49,7 @@ TEST(ThreadSafeQueueTest, MPMCStressTest) {
     }
 
     std::vector<std::thread> consumers;
+    consumers.reserve(num_consumers);
     for (int i = 0; i < num_consumers; ++i) {
         consumers.emplace_back([&queue, &received_count]() {
             while (true) {

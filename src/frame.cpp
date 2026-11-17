@@ -5,6 +5,7 @@
 #include <cstring>
 #include <span>
 #include <stdexcept>
+#include <cstdint>
 
 namespace aether {
 
@@ -13,7 +14,7 @@ std::vector<uint8_t> encode_frame(std::span<const uint8_t> payload) {
         throw std::runtime_error("Payload size exceeds maximum frame size limit (1 MiB)");
     }
 
-    uint32_t payload_len = static_cast<uint32_t>(payload.size());
+    auto payload_len = static_cast<uint32_t>(payload.size());
 
     uint32_t net_len = htonl(payload_len);
 
@@ -50,8 +51,8 @@ std::optional<std::vector<uint8_t>> FrameDecoder::next() {
         return std::nullopt;
     }
 
-    std::vector<uint8_t> payload(buf_.begin() + 4, buf_.begin() + total);
-    buf_.erase(buf_.begin(), buf_.begin() + total);
+    std::vector<uint8_t> payload(buf_.begin() + 4, buf_.begin() + static_cast<ptrdiff_t>(total));
+    buf_.erase(buf_.begin(), buf_.begin() + static_cast<ptrdiff_t>(total));
     return payload;
 }
 
