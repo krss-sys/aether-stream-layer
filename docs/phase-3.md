@@ -14,7 +14,7 @@
 
 Concurrency is handled by a **Task-Queue ThreadPool**: a fixed number of worker threads, each running an infinite loop that pulls tasks from a thread-safe queue (`ThreadSafeQueue`).
 
-- **Task submission:** when a client connects (`TcpServer`), a task that handles the connection lifecycle (`handle_echo`) is `submit`-ted to the `ThreadPool`.
+- **Task submission:** when a client connects (`TcpServer`), a task that handles the connection lifecycle (`handle_echo` in `session.cpp`) is `submit`-ted to the `ThreadPool`.
 - **Blocking execution:** the worker that picks up the task owns the **entire** connection lifetime — read a frame using `recv_some` (since it doesn't know the payload size in advance), process it, echo it back — in a loop until the client disconnects. The frame reading inside that loop uses the `recv_some` approach from Phase 2 (Day 21) and the validation-before-allocation rule from Phase 2 (Day 23).
 
 ```mermaid

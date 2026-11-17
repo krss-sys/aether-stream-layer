@@ -20,3 +20,23 @@ No behavior change.
 Status: keep.
 Reason: reserved for future phase (timeout handling). Currently only used in tests.
 If unused after 2 phases, consider removing.
+
+## #20 RAII for client_fd in accept_one
+Status: fixed.
+Details: FileDescriptor now wraps client_fd immediately after accept, before setsockopt. If setsockopt throws, fd is closed automatically.
+
+## #2 g_stop extracted to stop_flag.hpp
+Status: fixed.
+Details: g_stop is now in stop_flag.hpp (inline std::atomic<bool>). net_io.cpp no longer includes tcp_server.hpp.
+
+## #3 handle_echo moved to session.cpp
+Status: fixed.
+Details: handle_echo is now in session.hpp/.cpp, separate from client. client.cpp only contains AetherClient.
+
+## #4 AetherClient uses FileDescriptor
+Status: fixed.
+Details: AetherClient now uses FileDescriptor (RAII) instead of raw int. Move-only.
+
+## #25 connect() calls disconnect() first
+Status: fixed.
+Details: AetherClient::connect() now calls disconnect() if already connected, preventing fd leak on reconnect.

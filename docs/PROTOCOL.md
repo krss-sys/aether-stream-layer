@@ -53,13 +53,13 @@ Byte offsets are on the first line. The first field is fixed-size (4 bytes), so 
 
 - **Maximum `Length`:** The `Length` field is restricted to **1 MiB** (1,048,576 bytes) to prevent Denial-of-Service (DoS) attacks via memory exhaustion.
 - **Size on the wire:** `Length` does not include its own 4 bytes, so a frame is at most 1 MiB + 4 bytes in total.
-- **On violation:** The server logs a warning and closes the TCP connection (`close(fd)`). Once a `Length` cannot be trusted, there is no reliable way to find where the next frame begins.
+- **On violation:** The server logs a warning and the connection is closed (via RAII `FileDescriptor`). Once a `Length` cannot be trusted, there is no reliable way to find where the next frame begins.
 
 ```mermaid
 flowchart TD
     A["Read exactly 4 bytes"] --> B["Length (Big-Endian → host order)"]
     B --> C{"Length within<br/>1 MiB limit?"}
-    C -- "No" --> X["Log warning<br/>→ close(fd)"]
+    C -- "No" --> X["Log warning<br/>→ connection closed (RAII)"]
     C -- "Yes" --> D["Read Length bytes"]
     D --> E["Payload = the bytes read"]
 ```

@@ -76,7 +76,7 @@ Example: Payload `"hello"` (5 bytes).
 | **Behavior** | Thin wrapper around the POSIX `recv` system call. Returns whatever chunk is currently available in the TCP socket receive buffer (1 byte up to the requested capacity). | Enforces strict stream framing by looping over `recv` calls until exactly `n` bytes are accumulated in the destination buffer. |
 | **Result** | Number of bytes read (`> 0`), EOF (`== 0`), or error (`< 0`). | Success once `n` bytes are read. Premature EOF (`received == 0`) is a failure state (`false`). |
 | **Bookkeeping** | None needed. | Pointer arithmetic (`ptr += received`), remaining length (`n_left -= received`), and signal interruption (`EINTR`) handling. |
-| **Use case** | General stream reading where message boundaries are not predetermined. **Used by the server worker (`handle_echo`).** | Protocol frame decoding, reading a fixed-size 4-byte header to learn the payload length, then an exact read of the payload bytes. **Used by the client (`AetherClient::recv_frame`).** |
+| **Use case** | General stream reading where message boundaries are not predetermined. **Used by the server worker (`handle_echo` in `session.cpp`).** | Protocol frame decoding, reading a fixed-size 4-byte header to learn the payload length, then an exact read of the payload bytes. **Used by the client (`AetherClient::recv_frame`).** |
 
 ### 2. How `recv_exact` Loops
 
@@ -120,10 +120,10 @@ The key property: **no allocation happens before validation**. A header claiming
 
 ### 2. Why the Fixed Header Buffer Matters
 
-The header read is the only place where the broker touches the socket without knowing the frame size. Keeping it at a fixed 4 bytes means:
+The header read is the only place where the server touches the socket without knowing the frame size. Keeping it at a fixed 4 bytes means:
 
 - A malicious peer cannot influence the first allocation at all — it is a compile-time constant.
-- The `Length` value is only trusted *after* it has been read in full by `recv_exact(4)`, so a partially-arrived header can never be misinterpreted as a smaller/larger frame.
+- The `Length` value is only trusted *after* it has been read in full by the server's stream reading mechanism (`recv_some`), so a partially-arrived header can never be misinterpreted as a smaller/larger frame.
 
 ### 3. Reflection
 
