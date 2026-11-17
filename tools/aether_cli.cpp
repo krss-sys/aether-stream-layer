@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::string output(response.value().begin(), response.value().end());
-    std::cout << output << std::endl;
+    std::cout << output << "\n";
 
     return EXIT_SUCCESS;
 }

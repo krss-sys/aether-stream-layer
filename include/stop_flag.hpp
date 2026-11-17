@@ -2,5 +2,5 @@
 #include <atomic>
 
 namespace aether {
-extern std::atomic<bool> g_stop;
+inline std::atomic<bool> g_stop{false};
 }
