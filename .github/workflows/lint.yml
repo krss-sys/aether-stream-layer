@@ -2,9 +2,9 @@ name: Static Analysis
 
 on:
   push:
-    branches: [ main, audit/clean ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, audit/clean ]
+    branches: [ main ]
 
 concurrency:
   group: lint-${{ github.ref }}

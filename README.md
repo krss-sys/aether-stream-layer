@@ -318,9 +318,6 @@ aether-stream-layer/
 │   └── aether_frame_torture.cpp # Coalescing / fragmentation / hostile-header test
 ├── docs/                   # Documentation & specifications
 │   ├── PROTOCOL.md         # Wire format spec (v0) + planned v1
-│   ├── DECISIONS.md        # Design decisions & deferrals
-│   ├── TODO.md             # Open items
-│   ├── inventory.md        # File-by-file map: purpose, callers
 │   ├── phase-1.md          # Echo server & basic networking (historical)
 │   ├── phase-2.md          # Protocol design & framing
 │   ├── phase-3.md          # Concurrency & ThreadPool

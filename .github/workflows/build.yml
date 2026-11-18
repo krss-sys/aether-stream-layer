@@ -2,9 +2,9 @@ name: Build and Test
 
 on:
   push:
-    branches: [ main, audit/clean ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, audit/clean ]
+    branches: [ main ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
