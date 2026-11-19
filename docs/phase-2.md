@@ -1,3 +1,4 @@
+<!-- historical -->
 # 📨 Phase 2: Protocol Design & Framing
 
 > **TL;DR - What does this phase cover?**

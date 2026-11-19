@@ -58,7 +58,7 @@ Aether Stream Layer is the networking core that a streaming/broker layer will si
 5. **Stop.** On `SIGINT` / `SIGTERM` the accept loop exits, blocked reads notice the flag on their next 1 s timeout tick, the pool closes its queue and joins every worker.
 
 > [!NOTE]
-> **Blocking by design.** One connection pins one worker, so at most 8 clients are served at once; a 9th is already `accept()`-ed but waits in the queue until a worker frees up (measured in the [Phase 3 worker-exhaustion test](docs/phase-3.md): 4 workers, 5 persistent connections). An idle timeout and an `epoll` event loop are deliberately deferred to Phase 4 — see [`DECISIONS.md`](docs/DECISIONS.md) #27.
+> **Blocking by design.** One connection pins one worker, so at most 8 clients are served at once; a 9th is already `accept()`-ed but waits in the queue until a worker frees up (measured in the [Phase 3 worker-exhaustion test](docs/phase-3.md): 4 workers, 5 persistent connections). An idle timeout and an `epoll` event loop are deliberately deferred to Phase 4 
 
 <details>
 <summary><b>Show the connection lifecycle as a sequence diagram</b></summary>
@@ -247,7 +247,6 @@ strace -f -o trace.txt ./build/aether_server
 
 ## 🧠 Design notes
 
-The decisions behind the code are recorded in [`docs/DECISIONS.md`](docs/DECISIONS.md) and the [audit log](docs/journal/audit-log.md). The highlights:
 
 <details open>
 <summary><b>Resource safety</b></summary>
@@ -321,7 +320,6 @@ aether-stream-layer/
 │   ├── phase-1.md          # Echo server & basic networking (historical)
 │   ├── phase-2.md          # Protocol design & framing
 │   ├── phase-3.md          # Concurrency & ThreadPool
-│   ├── journal/            # Audit plan and day-by-day audit log
 │   └── assets/             # README graphics (self-hosted SVG)
 ├── CMakeLists.txt          # Library `aether_core` + server, cli, torture, tests
 ├── Doxyfile                # API docs: `doxygen Doxyfile`
@@ -340,8 +338,6 @@ aether-stream-layer/
 | ✅ | **1 · Echo server** | TCP echo, thread-per-connection, `strace`-verified syscall lifecycle | Days 7–13 · [notes](docs/phase-1.md) |
 | ✅ | **2 · Protocol & framing** | Big-endian length prefix, 1 MiB cap, `recv_some` / `recv_exact`, `FrameDecoder` | Days 14–23 · [notes](docs/phase-2.md) |
 | ✅ | **3 · Concurrency** | Blocking ThreadPool, `ThreadSafeQueue`, ASan / TSan verification | Days 29–33 · [notes](docs/phase-3.md) |
-| ✅ | **Audit** | Graceful shutdown, RAII clean-up, `config.hpp`, error handling, docs re-synced with the code | 11 days · [log](docs/journal/audit-log.md) |
-| ⬜ | **4 · Event-driven I/O** | Idle timeout and an `epoll` loop to get past one-thread-per-client (C10K) | [DECISIONS #27](docs/DECISIONS.md) |
 | ⬜ | **Ingestion path** | Wire the queue between network ingestion and downstream processing; add `ACK` | Designed, not wired in yet |
 | ⬜ | **Protocol v1** | `Command (1 B) · TopicLength (2 B BE) · Topic · Payload` | [PROTOCOL.md §5](docs/PROTOCOL.md) |
 
@@ -355,9 +351,6 @@ aether-stream-layer/
 | [`phase-1.md`](docs/phase-1.md) | `recv()` semantics, thread-per-connection, syscall tracing *(historical)* |
 | [`phase-2.md`](docs/phase-2.md) | Why big-endian, why 1 MiB, `recv_some` vs `recv_exact`, buffer management |
 | [`phase-3.md`](docs/phase-3.md) | ThreadPool design, worker-exhaustion test, condvar and shutdown internals |
-| [`DECISIONS.md`](docs/DECISIONS.md) | What was fixed, kept or deferred, and why |
-| [`inventory.md`](docs/inventory.md) | Every file: main class, purpose, who calls it |
-| [`journal/`](docs/journal) | The audit plan and the day-by-day log |
 
 <br>
 
