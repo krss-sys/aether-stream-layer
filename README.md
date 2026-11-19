@@ -284,47 +284,47 @@ strace -f -o trace.txt ./build/aether_server
 
 ```text
 aether-stream-layer/
-├── include/                # Public headers
-│   ├── client.hpp          # AetherClient: RAII TCP client (connect / send_frame / recv_frame)
-│   ├── config.hpp          # Tunables: port, worker count, buffer size, timeouts
-│   ├── connection_guard.hpp# RAII log of client connect / disconnect
-│   ├── file_descriptor.hpp # Move-only RAII wrapper for POSIX fds
-│   ├── frame.hpp           # kMaxFrameSize, encode_frame, FrameDecoder
-│   ├── logger.hpp          # Thread-safe logger (stderr)
-│   ├── net_io.hpp          # send_all / recv_some / recv_exact (EINTR-safe)
-│   ├── session.hpp         # handle_echo: the per-connection handler
-│   ├── stop_flag.hpp       # Global atomic shutdown flag
-│   ├── tcp_server.hpp      # Accept loop + signal setup
-│   ├── thread_pool.hpp     # Fixed-size pool of std::jthread workers
-│   └── thread_safe_queue.hpp# Mutex + condition_variable queue
-├── src/                    # Implementations
-│   ├── client.cpp          # AetherClient implementation
-│   ├── frame.cpp           # Frame encoding & decoding logic
-│   ├── logger.cpp          # Logger implementation
-│   ├── main.cpp            # Server entry point
-│   ├── net_io.cpp          # Safe network I/O primitives
-│   ├── session.cpp         # Connection handler loop
-│   └── tcp_server.cpp      # TCP socket and polling implementation
-├── tests/                  # GoogleTest suites -> aether_tests
-│   ├── test_client_reconnect.cpp # Reconnect & fd leak tests
-│   ├── test_fd.cpp         # FileDescriptor RAII tests
-│   ├── test_frame.cpp      # Frame parsing and codec tests
-│   ├── test_net_io.cpp     # Network I/O robustness tests
-│   ├── test_pool.cpp       # ThreadPool concurrency tests
-│   └── test_queue.cpp      # ThreadSafeQueue MPMC stress tests
-├── tools/                  # Utilities & stress test tools
-│   ├── aether_cli.cpp      # Command-line client
-│   └── aether_frame_torture.cpp # Coalescing / fragmentation / hostile-header test
-├── docs/                   # Documentation & specifications
-│   ├── PROTOCOL.md         # Wire format spec (v0) + planned v1
-│   ├── phase-1.md          # Echo server & basic networking (historical)
-│   ├── phase-2.md          # Protocol design & framing
-│   ├── phase-3.md          # Concurrency & ThreadPool
-│   └── assets/             # README graphics (self-hosted SVG)
-├── CMakeLists.txt          # Library `aether_core` + server, cli, torture, tests
-├── Doxyfile                # API docs: `doxygen Doxyfile`
-├── LICENSE                 # MIT
-└── README.md               # Project overview & instructions
+├── include/                        # Public headers
+│   ├── client.hpp                  # AetherClient: RAII TCP client (connect / send_frame / recv_frame)
+│   ├── config.hpp                  # Tunables: port, worker count, buffer size, timeouts
+│   ├── connection_guard.hpp        # RAII log of client connect / disconnect
+│   ├── file_descriptor.hpp         # Move-only RAII wrapper for POSIX fds
+│   ├── frame.hpp                   # kMaxFrameSize, encode_frame, FrameDecoder
+│   ├── logger.hpp                  # Thread-safe logger (stderr)
+│   ├── net_io.hpp                  # send_all / recv_some / recv_exact (EINTR-safe)
+│   ├── session.hpp                 # handle_echo: the per-connection handler
+│   ├── stop_flag.hpp               # Global atomic shutdown flag
+│   ├── tcp_server.hpp              # Accept loop + signal setup
+│   ├── thread_pool.hpp             # Fixed-size pool of std::jthread workers
+│   └── thread_safe_queue.hpp       # Mutex + condition_variable queue
+├── src/                            # Implementations
+│   ├── client.cpp                  # AetherClient implementation
+│   ├── frame.cpp                   # Frame encoding & decoding logic
+│   ├── logger.cpp                  # Logger implementation
+│   ├── main.cpp                    # Server entry point
+│   ├── net_io.cpp                  # Safe network I/O primitives
+│   ├── session.cpp                 # Connection handler loop
+│   └── tcp_server.cpp              # TCP socket and polling implementation
+├── tests/                          # GoogleTest suites -> aether_tests
+│   ├── test_client_reconnect.cpp   # Reconnect & fd leak tests
+│   ├── test_fd.cpp                 # FileDescriptor RAII tests
+│   ├── test_frame.cpp              # Frame parsing and codec tests
+│   ├── test_net_io.cpp             # Network I/O robustness tests
+│   ├── test_pool.cpp               # ThreadPool concurrency tests
+│   └── test_queue.cpp              # ThreadSafeQueue MPMC stress tests
+├── tools/                          # Utilities & stress test tools
+│   ├── aether_cli.cpp              # Command-line client
+│   └── aether_frame_torture.cpp    # Coalescing / fragmentation / hostile-header test
+├── docs/                           # Documentation & specifications
+│   ├── PROTOCOL.md                 # Wire format spec (v0) + planned v1
+│   ├── phase-1.md                  # Echo server & basic networking (historical)
+│   ├── phase-2.md                  # Protocol design & framing
+│   ├── phase-3.md                  # Concurrency & ThreadPool
+│   └── assets/                     # README graphics (self-hosted SVG)
+├── CMakeLists.txt                  # Library `aether_core` + server, cli, torture, tests
+├── Doxyfile                        # API docs: `doxygen Doxyfile`
+├── LICENSE                         # MIT
+└── README.md                       # Project overview & instructions
 ```
 
 </details>
