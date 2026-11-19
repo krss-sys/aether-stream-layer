@@ -1,3 +1,4 @@
+<!-- historical -->
 # 🔌 Phase 1: Echo Server & Basic Networking
 
 ## 📝 Aether Network Engine - Technical Notes
