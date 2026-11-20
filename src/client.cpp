@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #include "file_descriptor.hpp"
-#include "frame.hpp"
+#include "config.hpp"
 #include "net_io.hpp"
 
 namespace aether {
@@ -54,7 +54,7 @@ bool AetherClient::send_frame(std::span<const uint8_t> frame_data) {
     if (!m_sockfd.valid()) return false;
 
     uint32_t payload_len = static_cast<uint32_t>(frame_data.size());
-    if (payload_len > aether::kMaxFrameSize) {
+    if (payload_len > aether::config::kMaxFrameSize) {
         return false;
     }
 
@@ -81,7 +81,7 @@ std::optional<std::vector<uint8_t>> AetherClient::recv_frame() {
     }
 
     uint32_t len = ntohl(net_len);
-    if (len > aether::kMaxFrameSize) {
+    if (len > aether::config::kMaxFrameSize) {
         disconnect();
         return std::nullopt;
     }

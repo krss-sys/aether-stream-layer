@@ -16,6 +16,9 @@
 - **D1 — Roadmap in `plan/`, not `docs/`.** `docs/` is English-only repo documentation; the roadmap is a personal Vietnamese planning doc. Avoids mixing languages and avoids two sources of truth.
 - **D2 — `check_docs.sh` skips `plan/`.** Roadmap paths are *planned*, not *current*; they must not be checked against the working tree.
 - **D3 — Removed `docs/journal/`.** `docs/journal/audit-plan.md` and `audit-log.md` were created only to keep commits green during the audit period, not because they carried value. Same category as the previously removed `DECISIONS.md`, `inventory.md`, `TODO.md`. `check_docs.sh` now scans only `README.md` and `docs/*.md`.
+- **D4 — Protocol v1 lives inside the frame `Payload`.** No changes to `frame.cpp` or `FrameDecoder`; v1 is a structure inside the existing 1 MiB frame. Keeps the framing layer stable and testable.
+- **D5 — `kOk` on `PRODUCE` means "accepted into broker memory", not "stored on disk".** Matches the AP design: fast ACK, data loss on crash is accepted and documented.
+- **D6 — `COMMIT(k)` means "next FETCH starts at k".** Offset semantics are off-by-one-prone; writing it down once prevents a classic bug.
 
 **Verification:**
 - `bash tools/check_docs.sh` → red on the old tree (broken links, `audit/clean` in CI), green after fixes.
