@@ -3,9 +3,7 @@
 #include <optional>
 #include <span>
 #include <vector>
-
 namespace aether {
-constexpr uint32_t kMaxFrameSize = 1 << 20;
 
 std::vector<uint8_t> encode_frame(std::span<const uint8_t> payload);
 
