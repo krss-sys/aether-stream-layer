@@ -101,11 +101,11 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 **Hôm nay làm gì:** viết `docs/PROTOCOL.md` v1 và ghi quyết định vào mục **Quyết định** của `docs/phase-4.md` (mỗi phase có mục này, mỗi quyết định 2–3 dòng: chọn gì, vì sao). **Mục tiêu:** mọi ngữ nghĩa mơ hồ được chốt bằng chữ trước khi có code. **Tại sao:** phần "planned v1" cũ chỉ có `Command | TopicLength | Topic | Payload`; thiếu consumer group, offset, mã trạng thái. Để tới lúc code mới nghĩ sẽ sinh ra đúng loại lệch mà bạn vừa dọn.
 
-- [ ] Giữ nguyên tầng khung v0 (`Length | Payload`, trần 1 MiB). v1 là cấu trúc **bên trong** `Payload`, nên `frame.cpp`, `FrameDecoder` và `aether_frame_torture` không phải sửa
+- [x] Giữ nguyên tầng khung v0 (`Length | Payload`, trần 1 MiB). v1 là cấu trúc **bên trong** `Payload`, nên `frame.cpp`, `FrameDecoder` và `aether_frame_torture` không phải sửa
     
-- [ ] Request payload: `Command(1) | TopicLength(2 BE) | Topic | Body`. Response payload: `Status(1) | Body`. Response trả **đúng thứ tự request** trên cùng connection (cho phép pipelining sau này)
+- [x] Request payload: `Command(1) | TopicLength(2 BE) | Topic | Body`. Response payload: `Status(1) | Body`. Response trả **đúng thứ tự request** trên cùng connection (cho phép pipelining sau này)
     
-- [ ] Bảng lệnh (viết vào PROTOCOL.md):
+- [x] Bảng lệnh (viết vào PROTOCOL.md):
     
     |Lệnh|Mã|Body request|Body response|
     |:--|:-:|:--|:--|
@@ -116,15 +116,15 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
     
     Mã `Status`: `kOk=0`, `kBusy=1` (hàng đợi ingest đầy), `kBadRequest=2` (sai định dạng, lệnh lạ, tên sai, quá cỡ)
     
-- [ ] **Ngữ nghĩa phải viết ra** (mỗi cái 1 dòng): (a) offset của topic bắt đầu từ 0, +1 mỗi message; (b) ⚠️ `COMMIT(k)` nghĩa là "đã xử lý xong 0..k-1, lần FETCH sau bắt đầu từ k" (nhầm off-by-one ở đây là lỗi kinh điển); (c) FETCH đọc từ offset đã commit của `(topic, group)` và **không tự commit** → consumer at-least-once; (d) FETCH topic chưa tồn tại trả `Count=0`, không phải lỗi (consumer có thể khởi động trước producer); (e) COMMIT chỉ được tiến, không lùi, và không vượt `next_offset`; (f) tên topic/group khớp `[A-Za-z0-9._-]{1,64}` (chống log injection, và cho phép dùng `/` làm dấu ngăn khi ghép khóa); (g) `MaxMessages` bị kẹp ở `kMaxFetchMessages = 1000`, giá trị 0 là `kBadRequest`
+- [x] **Ngữ nghĩa phải viết ra** (mỗi cái 1 dòng): (a) offset của topic bắt đầu từ 0, +1 mỗi message; (b) ⚠️ `COMMIT(k)` nghĩa là "đã xử lý xong 0..k-1, lần FETCH sau bắt đầu từ k" (nhầm off-by-one ở đây là lỗi kinh điển); (c) FETCH đọc từ offset đã commit của `(topic, group)` và **không tự commit** → consumer at-least-once; (d) FETCH topic chưa tồn tại trả `Count=0`, không phải lỗi (consumer có thể khởi động trước producer); (e) COMMIT chỉ được tiến, không lùi, và không vượt `next_offset`; (f) tên topic/group khớp `[A-Za-z0-9._-]{1,64}` (chống log injection, và cho phép dùng `/` làm dấu ngăn khi ghép khóa); (g) `MaxMessages` bị kẹp ở `kMaxFetchMessages = 1000`, giá trị 0 là `kBadRequest`
     
-- [ ] ⚠️ **Cỡ message tối đa không phải 1 MiB.** Response của FETCH có thêm 17 byte (`Status 1 + FirstOffset 8 + Count 4 + MsgLength 4`) và request của PRODUCE có thêm `3 + len(topic)` byte, đều phải nằm trong 1 MiB của khung. Chốt `kMaxMessageSize = kMaxFrameSize - 128` (header lớn nhất hiện nay là `3 + 64 = 67` byte, nên 128 là đủ và còn dư) và ghi vào `config.hpp`/`frame.hpp` kèm `static_assert` (cỡ message + 17 ≤ khung, và cỡ message + 3 + 64 ≤ khung; sau này header phình ra thì `static_assert` sẽ báo ngay). Ghi cả giới hạn mềm của broker: `kMaxTopics = 64`, `kMaxGroups = 1024`
+- [x] ⚠️ **Cỡ message tối đa không phải 1 MiB.** Response của FETCH có thêm 17 byte (`Status 1 + FirstOffset 8 + Count 4 + MsgLength 4`) và request của PRODUCE có thêm `3 + len(topic)` byte, đều phải nằm trong 1 MiB của khung. Chốt `kMaxMessageSize = kMaxFrameSize - 128` (header lớn nhất hiện nay là `3 + 64 = 67` byte, nên 128 là đủ và còn dư) và ghi vào `config.hpp`/`frame.hpp` kèm `static_assert` (cỡ message + 17 ≤ khung, và cỡ message + 3 + 64 ≤ khung; sau này header phình ra thì `static_assert` sẽ báo ngay). Ghi cả giới hạn mềm của broker: `kMaxTopics = 64`, `kMaxGroups = 1024`
     
-- [ ] Viết ví dụ hex tính tay từng byte (Ngày 3 sẽ dùng làm test vector): `PING` = `00 00 00 03 04 00 00`, response `00 00 00 01 00`; `PRODUCE` topic `t` message `hi` = `00 00 00 06 01 00 01 74 68 69`, response `00 00 00 01 00`
+- [x] Viết ví dụ hex tính tay từng byte (Ngày 3 sẽ dùng làm test vector): `PING` = `00 00 00 03 04 00 00`, response `00 00 00 01 00`; `PRODUCE` topic `t` message `hi` = `00 00 00 06 01 00 01 74 68 69`, response `00 00 00 01 00`
     
-- [ ] 📝 Ghi 3 quyết định vào mục **Quyết định** của `docs/phase-4.md`: v1 nằm trong Payload; ACK = "accepted, not stored"; offset commit = offset kế tiếp. Cập nhật mục "Future Work" trong PROTOCOL.md thành "v1 (PLANNED, đang làm)"
+- [x] 📝 Ghi 3 quyết định vào mục **Quyết định** của `docs/phase-4.md`: v1 nằm trong Payload; ACK = "accepted, not stored"; offset commit = offset kế tiếp. Cập nhật mục "Future Work" trong PROTOCOL.md thành "v1 (PLANNED, đang làm)"
     
-- [ ] 🌿 Commit: `docs: protocol v1 specification`
+- [x] 🌿 Commit: `docs: protocol v1 specification`
     
 
 **Xong khi:** bạn giải thích được vì sao message lớn nhất không phải 1 MiB đúng, và `COMMIT(3)` nghĩa là gì.
