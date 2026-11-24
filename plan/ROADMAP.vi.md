@@ -1,6 +1,6 @@
 # ROADMAP — Aether Stream Layer: từ transport đến broker (Phase 4 → 7)
 
-> File này đặt ở `docs/ROADMAP.md`. Nó là **kế hoạch**, không phải tài liệu mô tả repo, nên `tools/check_docs.sh` (Ngày 1) loại nó ra khỏi phần kiểm tra đường dẫn. Số ngày đánh lại từ 1 cho lộ trình này (Ngày 1–40) và **không nối** với số ngày trong `phase-1..3.md` / audit log, vì các số cũ đã lệch.
+> File này đặt ở `plan/ROADMAP.vi.md`. Nó là **kế hoạch**, không phải tài liệu mô tả repo, nên `tools/check_docs.sh` (Ngày 1) loại thư mục `plan/` ra khỏi phần kiểm tra đường dẫn. Số ngày đánh lại từ 1 cho lộ trình này (Ngày 1–40) và **không nối** với số ngày trong `phase-1..3.md` / audit log, vì các số cũ đã lệch.
 
 ---
 
@@ -15,7 +15,7 @@ Repo đã có sau 3 phase + audit: **transport sạch** (framing 4 byte big-endi
 3. **"AP" phải nói cho thật.** Một node, trong RAM, không có partition mạng, nên không phải AP theo nghĩa CAP. Cái repo chứng minh được là: **ACK nhanh, quá tải vẫn trả lời (từ chối ghi chứ không chết), chấp nhận mất dữ liệu khi crash**. Phase 6 _đo_ đúng điều đó (loss-window + so với ACK-sau-fsync) thay vì chỉ tuyên bố.
 4. **RAM vô hạn = chết.** Queue/log không giới hạn thì OOM, mất luôn tính sẵn sàng. Phải có giới hạn + chính sách mất dữ liệu rõ ràng (ingest đầy → `kBusy`; log đầy → bỏ message cũ nhất).
 5. **Mô hình blocking không hợp với broker.** Một client rảnh ghim một worker; 8 client rảnh là server đứng (đợt audit đã ghi nhận và hoãn việc này tới phase sau). Vì vậy `epoll` được đưa lên **ngay sau khi broker chạy được** (Phase 5), không để cuối.
-6. **Ngữ nghĩa giao hàng ghi ra từ đầu:** ACK = "đã nhận vào bộ nhớ broker", không phải "đã lưu". FETCH không tự commit nên consumer là **at-least-once**.
+6. **Ngữ nghĩa giao hàng ghi ra từ đầu:** ACK = "đã nhận vào bộ nhớ broker", không phải "đã lưu". FETCH không tự commit nên consumer là **at-least-once**. Và vì ACK đến trước khi worker ghi vào log, một FETCH ngay sau ACK có thể **chưa thấy** message đó (vài ms): test và e2e phải chờ có hạn, không giả định thấy ngay.
 
 Kiến trúc đích:
 
@@ -44,8 +44,8 @@ Lộ trình cũ lệch vì tài liệu và code chỉ được đối chiếu b�
 2. **Số liệu có một nguồn.** Hằng số: `config.hpp`. Số đo hiệu năng: `docs/BENCHMARKS.md`, mỗi dòng kèm **commit hash** + lệnh đã chạy. Đừng chép số sang README/SVG (nếu cần thì để `check_docs.sh` kiểm).
 3. **Ví dụ lệnh có một nguồn.** Lệnh trong README là lệnh của `tests/e2e/quickstart.sh`, CI chạy nó. Ví dụ không chạy được thì CI đỏ.
 4. **Doc cùng commit với code** (cùng PR). Không "để cuối phase viết doc".
-5. **Ngày đồng bộ** = Ngày 10, 20, 30, 40. Việc: đối chiếu `ROADMAP.md` với repo, sửa phase sau nếu lệch, ghi vào bảng "Nhật ký lệch" cuối file. **Timebox ≤ 1 buổi.**
-6. **Thấy thứ lệch giữa phase thì ghi một dòng vào mục **Nợ** ở cuối `docs/phase-N.md` của phase đang làm rồi đi tiếp.** Không dừng làm "dọn dẹp lớn". Chỉ xử lý ở ngày đồng bộ, hoặc ngay nếu nó chặn việc hôm nay.
+5. **Ngày đồng bộ** = Ngày 10, 20, 30, 40. Việc: đối chiếu `plan/ROADMAP.vi.md` với repo, sửa phase sau nếu lệch, ghi vào bảng "Nhật ký lệch" cuối file. **Timebox ≤ 1 buổi.**
+6. **Thấy thứ lệch giữa phase thì ghi một dòng vào mục Nợ ở cuối `docs/phase-N.md` của phase đang làm rồi đi tiếp.** Không dừng làm "dọn dẹp lớn". Chỉ xử lý ở ngày đồng bộ, hoặc ngay nếu nó chặn việc hôm nay.
 7. **Doc lịch sử đóng băng:** `phase-1..3.md` thêm dòng `<!-- historical -->` ở đầu và để nguyên (script bỏ qua file có dòng này).
 
 ---
@@ -135,11 +135,16 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 **Hôm nay làm gì:** viết bộ mã hóa/giải mã request và response. **Mục tiêu:** dữ liệu rác từ mạng không bao giờ làm crash hay ném exception. **Tại sao:** đây là chỗ đầu tiên code của bạn tin vào cấu trúc do người lạ gửi tới; mọi `length` đều phải được kiểm tra trước khi dùng.
 
+- [ ] 📝 **Vá nhỏ cho đặc tả Ngày 2** (phát hiện khi rà lại lộ trình sau khi Ngày 2 đã xong; **không sửa gì đã tick, chỉ thêm**). Ghi vào `docs/PROTOCOL.md` (mục ngữ nghĩa) và mục **Quyết định** của `docs/phase-4.md`:
+    - (h) ⚠️ **ACK không có nghĩa là FETCH thấy ngay**: `kOk` được trả trước khi worker ghi vào log, nên message có thể xuất hiện sau vài ms. Consumer phải hỏi lại, test và e2e phải chờ có hạn
+    - (i) `FETCH`/`COMMIT` **không bao giờ tạo** topic mới (chỉ `PRODUCE` tạo), để người lạ không thể tạo topic bằng cách hỏi
+    - `kMaxTopics = 64` là giới hạn **cứng**, kiểm ngay lúc `PRODUCE` (Ngày 7). Chữ "mềm" ở Ngày 2 không còn đúng
+    - Hằng `kIngestCapacity` sẽ thêm ở Ngày 6, không phải ở Ngày 2
 - [ ] `include/message.hpp` + `src/message.cpp` (đã được `file(GLOB CONFIGURE_DEPENDS)` nhặt, không cần sửa CMake): `enum class Command : uint8_t`, `enum class StatusCode : uint8_t`, `struct Request { Command cmd; std::string topic; std::vector<uint8_t> body; }`
 - [ ] `std::optional<Request> decode_request(std::span<const uint8_t>)`, `std::vector<uint8_t> encode_response(StatusCode, std::span<const uint8_t> body)`, và phía client `encode_request`, `decode_response`
 - [ ] Viết một `BodyReader` nhỏ: con trỏ có kiểm biên (`read_u16/u32/u64/bytes` trả `bool`). Cả FETCH lẫn COMMIT dùng chung để khỏi lặp lại kiểm biên. ⚠️ Số 64-bit big-endian: không có `htonll` chuẩn, dùng `htobe64` / `be64toh` trong `<endian.h>`
 - [ ] ⚠️ Quy tắc: **dữ liệu từ mạng → trả `nullopt`/`kBadRequest`, không ném exception** (khác `encode_frame` ném khi payload quá lớn, vì phía đó là lỗi của chính ta)
-- [ ] 🧪 `tests/test_message.cpp`: round-trip từng lệnh; các vector hex của Ngày 2; **cắt cụt**: lấy một payload hợp lệ rồi cắt ở mọi độ dài 0..n-1, tất cả phải trả `nullopt`; `TopicLength` lớn hơn phần còn lại; ký tự cấm trong tên; tên 65 ký tự; "fuzz-lite": 100.000 chuỗi byte ngẫu nhiên (seed cố định) đưa vào `decode_request`, chạy dưới ASan không được crash
+- [ ] 🧪 `tests/test_message.cpp`: round-trip từng lệnh; các vector hex của Ngày 2; **cắt cụt**: lấy payload hợp lệ rồi cắt ở mọi độ dài trong phần header (`Command + TopicLength + Topic`) → `decode_request` phải trả `nullopt`; cắt trong body của `FETCH`/`COMMIT` → hàm parse body trả `false`; còn cắt trong body của `PRODUCE` thì **vẫn hợp lệ** (body là byte tự do, một message ngắn hơn); `TopicLength` lớn hơn phần còn lại; topic rỗng với `PRODUCE`/`FETCH`/`COMMIT` → `nullopt` (chỉ `PING` được rỗng); ký tự cấm trong tên; tên 65 ký tự; "fuzz-lite": 100.000 chuỗi byte ngẫu nhiên (seed cố định) đưa vào `decode_request`, chạy dưới ASan không được crash
 - [ ] Thêm `tests/test_message.cpp` vào `add_executable(aether_tests ...)` (luật 2 của `check_docs.sh` sẽ nhắc nếu quên)
 - [ ] 🌿 Commit: `feat: add protocol v1 message codec`
 
@@ -183,7 +188,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 **Hôm nay làm gì:** thêm dung lượng tối đa và `try_push` vào `ThreadSafeQueue`. **Mục tiêu:** khi đầy thì **từ chối** thay vì phình bộ nhớ. **Tại sao:** AP nghĩa là "vẫn trả lời khi quá tải". Hàng đợi vô hạn sẽ OOM và chết hẳn; hàng đợi có giới hạn + `kBusy` thì mất một phần ghi nhưng server vẫn sống.
 
 - [ ] Đọc lại `include/thread_safe_queue.hpp`: hiện `push` luôn thành công, không có giới hạn
-- [ ] Thêm `explicit ThreadSafeQueue(size_t capacity = 0)` (0 = không giới hạn → hành vi cũ, 6 test cũ không được đổi) và `bool try_push(T& item)`; thêm `size() const`
+- [ ] Thêm `explicit ThreadSafeQueue(size_t capacity = 0)` (0 = không giới hạn → hành vi cũ, 6 test cũ không được đổi) và `bool try_push(T& item)`; thêm `size() const`; thêm hằng `kIngestCapacity = 65536` vào `config.hpp` (dung lượng hàng đợi ingest của broker, dùng ở Ngày 7)
 - [ ] ⚠️ `try_push` nhận `T&` và chỉ `std::move` **sau khi** chắc chắn nhận. Nếu nhận theo giá trị hoặc move trước khi kiểm, message bị từ chối đã bị "ăn mất" và không thể trả `kBusy` kèm dữ liệu còn nguyên. Chỉ `notify_one()` khi push thành công
 - [ ] Quy tắc: queue đã `close()` thì `try_push` trả `false`
 - [ ] 🧪 Thêm test: đầy → `false`, `pop` một cái → `true`; sau `close()` → `false`; **MPMC có giới hạn**: 4 producer `try_push` 10.000 mỗi thread (không thử lại), 2 consumer; kiểm `accepted + rejected == 40000` và `popped == accepted`. Chạy dưới TSan
@@ -198,9 +203,9 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 **Hôm nay làm gì:** ráp queue + log + tracker thành `Broker`. **Mục tiêu:** `produce` trả ngay (`kOk`/`kBusy`/`kBadRequest`), một thread nền chuyển message từ queue vào log. **Tại sao:** đây là "Broker nhét vào Queue và ACK ngay" của ý tưởng gốc, nay có bàn giao rõ ràng giữa luồng mạng và luồng xử lý.
 
 - [ ] `include/broker.hpp` + `src/broker.cpp`. Constructor **không** tự chạy thread; có `start()` và `stop()` riêng. (Lý do: test quá tải ở Ngày 25 cần broker không có worker để hàng đợi đầy một cách xác định.)
-- [ ] `StatusCode produce(topic, payload)`: kiểm tên + `kMaxMessageSize` + giới hạn topic (giới hạn **mềm**, vượt vài cái do race là chấp nhận được) → `ingest_.try_push` → `kOk` hoặc `kBusy`. `FetchResult fetch(topic, group, max_msgs)`; `StatusCode commit(topic, group, offset)` (kiểm `offset ≤ next_offset` của log rồi gọi tracker)
+- [ ] `StatusCode produce(topic, payload)`: kiểm tên + `kMaxMessageSize` → tìm hoặc **tạo topic ngay tại đây** (dưới mutex, kiểm `kMaxTopics` chính xác; quá giới hạn → `kBadRequest`) → `ingest_.try_push` → `kOk` hoặc `kBusy`. `FetchResult fetch(topic, group, max_msgs)` (topic chưa có → kết quả rỗng); `StatusCode commit(topic, group, offset)` (kiểm `offset ≤ next_offset` của log rồi gọi tracker)
 - [ ] Worker là `std::jthread` chạy `while (auto m = ingest_.pop()) { log_for(m->topic).append(...); }`. `pop()` chỉ trả `nullopt` khi queue đã đóng **và** rỗng, nên `stop()` = `close()` + `join()` tự động xả hết message đã ACK. Không cần `pop_for` ở đây (ghi nhận: sẽ xóa ở Ngày 19 vì đợt audit đã ghi "không dùng sau 2 phase thì xem xét xóa")
-- [ ] Bảng topic: `std::mutex` + `std::unordered_map<std::string, std::unique_ptr<TopicLog>>` (`unique_ptr` để địa chỉ không đổi khi map rehash). Topic tạo lười ở worker
+- [ ] Bảng topic: `std::mutex` + `std::unordered_map<std::string, std::unique_ptr<TopicLog>>` (`unique_ptr` để địa chỉ không đổi khi map rehash). Topic được tạo ở `produce`, không tạo lười ở worker: nếu để worker tạo thì hàng nghìn topic lạ đang nằm chờ trong hàng đợi vẫn chưa được đếm và vượt `kMaxTopics`. `fetch`/`commit` trên topic chưa có thì không tạo (điều (i) ở Ngày 3)
 - [ ] ⚠️ Thứ tự `stop()` và hủy: worker dùng log nên phải join trước khi hủy bảng topic
 - [ ] 🧪 `tests/test_broker.cpp`: **không** `start()`: `capacity` lần `produce` đầu `kOk`, các lần sau `kBusy` (xác định, không phụ thuộc thời gian); `start()` rồi produce 1000 → đợi (vòng lặp có hạn 2 giây, không `sleep` cố định) tới khi `next_offset == 1000`, thứ tự đúng; kịch bản fetch/commit/fetch của Ngày 5; `stop()` khi queue còn message → không mất message nào đã ACK; chạy TSan
 - [ ] 🌿 Commit: `feat: add broker with async ingest worker`
@@ -213,15 +218,15 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 **Hôm nay làm gì:** thay `handle_echo` bằng `handle_session` đọc lệnh v1 và gọi `Broker`. **Mục tiêu:** `nc` + `xxd` chơi được với server như một broker. **Tại sao:** thấy hệ thống sống sớm; phần mạng không đổi nên rủi ro thấp.
 
-- [ ] Trong `session.cpp`: `handle_session(std::shared_ptr<FileDescriptor>, Broker&)`: `recv_some` → `FrameDecoder` → `decode_request` → dispatch → `encode_response` → `encode_frame` → `send_all`. `PING`/`PRODUCE`/`FETCH`/`COMMIT` gọi `Broker` và trả response **ngay**
+- [ ] Trong `session.cpp`: `handle_session(std::shared_ptr<FileDescriptor>, Broker&)`: `recv_some` → `FrameDecoder` → `decode_request` → dispatch → `encode_response` → `encode_frame` → `send_all`. `PING`/`PRODUCE`/`FETCH`/`COMMIT` gọi `Broker` và trả response **ngay**. ⚠️ Đặt phần "request → response" vào một hàm thuần `std::vector<uint8_t> dispatch_request(Broker&, const Request&)` (trong `message`/`session`), không viết thẳng trong vòng recv: Phase 5 dùng lại nguyên hàm này, và test quá tải Ngày 25 gọi nó trực tiếp không cần mạng
 - [ ] `TcpServer` sở hữu `Broker`; ⚠️ khai báo `Broker broker_` **trước** `ThreadPool pool_` (member bị hủy theo thứ tự ngược với khai báo; worker của pool còn đang dùng broker lúc pool join)
 - [ ] ⚠️ Request sai định dạng ở tầng v1 → trả `kBadRequest` và **giữ** connection (khung vẫn hợp lệ). Chỉ lỗi tầng khung (header quá 1 MiB) mới đóng connection như hiện nay
 - [ ] ⚠️ **Đừng log từng message ở mức Info.** `handle_echo` cũ log mỗi frame (`Received frame, size = ...`); với broker, mỗi dòng log tốn `ostringstream` + `localtime_r` + khóa mutex + ghi `stderr`, và sẽ thành nút cổ chai ở Phase 6. Chỉ log: connect/disconnect, lỗi
-- [ ] 🐧 Thử tay: `printf '\x00\x00\x00\x03\x04\x00\x00' | nc -q1 127.0.0.1 8080 | xxd` phải ra `00 00 00 01 00`. Gửi vector `PRODUCE` của Ngày 2 theo cách tương tự
+- [ ] 🐧 Thử tay: `printf '\x00\x00\x00\x03\x04\x00\x00' | nc -q1 127.0.0.1 8080 | xxd -p` phải ra `0000000100`. Gửi vector `PRODUCE` của Ngày 2 theo cách tương tự
 - [ ] Cập nhật `aether_frame_torture`: scenario "fragmentation" và "coalescing" hiện kiểm tra echo giống hệt; đổi thành gửi `PING` (chia từng byte / dồn 3 cái vào 1 `send`) và kiểm response `kOk` (1 hoặc 3 cái)
 - [ ] 🌿 Commit: `feat: serve broker commands instead of echo`
 
-**Xong khi:** `nc` + `xxd` nhận đúng `kOk` cho `PING` và `PRODUCE`; torture test vẫn PASS.
+**Xong khi:** `nc` + `xxd -p` nhận đúng `0000000100` cho `PING` và `PRODUCE`; torture test vẫn PASS.
 
 ---
 
@@ -231,7 +236,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 - [ ] `aether_cli [--host H] [--port P] <lệnh>`: `ping`, `produce <topic> <msg>`, `fetch <topic> <group> [max]`, `commit <topic> <group> <offset>`. Host mặc định `127.0.0.1`, port mặc định `config::kDefaultPort`. Thêm `AetherClient::call(...)` gói request + đọc response
 - [ ] `aether_server` nhận `argv[1]` là port (tạm thời, flags đầy đủ ở Ngày 31) để e2e chạy cổng tùy ý
-- [ ] `tests/e2e/quickstart.sh <build-dir>`: chọn cổng ngẫu nhiên (`$((20000 + RANDOM % 20000))`), chạy server nền với `trap 'kill $SRV' EXIT`, đợi cổng mở bằng vòng `nc -z` tối đa 5 giây (không `sleep` mù), rồi chạy đúng các lệnh của README: produce 3 message → fetch (3 message đúng thứ tự) → commit 3 → fetch (rỗng) → produce thêm 1 → fetch (message mới). So bằng `diff <(...) <(printf ...)`; lệch thì thoát mã ≠ 0
+- [ ] `tests/e2e/quickstart.sh <build-dir>`: chọn cổng ngẫu nhiên (`$((20000 + RANDOM % 20000))`), chạy server nền với `trap 'kill $SRV' EXIT`, đợi cổng mở bằng vòng `nc -z` tối đa 5 giây (không `sleep` mù), rồi chạy đúng các lệnh của README. ⚠️ ACK đến trước khi worker ghi vào log (điều (h) ở Ngày 3), nên **sau `produce` đừng `fetch` một phát rồi so ngay**: viết hàm `fetch_until <số message> <hạn 3 giây>` lặp lại `fetch` tới khi đủ, nếu không e2e sẽ lúc xanh lúc đỏ. Trình tự: produce 3 message → fetch (3 message đúng thứ tự) → commit 3 → fetch (rỗng) → produce thêm 1 → fetch (message mới). So bằng `diff <(...) <(printf ...)`; lệch thì thoát mã ≠ 0
 - [ ] 🐧 Nếu chạy tay thấy "Address already in use": `ss -ltnp | grep 8080`; script dùng cổng ngẫu nhiên nên CI không đụng nhau
 - [ ] Thêm bước chạy `tests/e2e/quickstart.sh build` vào CI (job Release)
 - [ ] 🌿 Commit: `test: add e2e quickstart script and broker CLI`
@@ -247,7 +252,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 - [ ] 3 build sanitizer (ASan, TSan, UBSan) + `ctest` + e2e đều xanh
 - [ ] 📝 `docs/phase-4.md` (≤ 80 dòng): sơ đồ hành trình một message (Mermaid), 3 quyết định chính, và **những gì chưa có** (epoll, giới hạn log). Chỉ nêu số liệu nếu kèm cách đo
 - [ ] 📝 README: cập nhật "Where the project stands", bảng roadmap, quick start (trỏ tới `tests/e2e/quickstart.sh`); `check_docs.sh` xanh
-- [ ] **Đồng bộ roadmap:** đọc Phase 5 bên dưới, đối chiếu với tên file/hàm thật vừa tạo; sửa `ROADMAP.md` nếu lệch; ghi vào bảng "Nhật ký lệch"
+- [ ] **Đồng bộ roadmap:** đọc Phase 5 bên dưới, đối chiếu với tên file/hàm thật vừa tạo; sửa `plan/ROADMAP.vi.md` nếu lệch; ghi vào bảng "Nhật ký lệch"
 - [ ] 🌿 Merge, `git tag -a v0.4.0 -m "phase 4: broker core"`, `git push --tags`
 
 **Xong khi:** CI xanh trên `main`, tag `v0.4.0` có trên GitHub.
@@ -334,7 +339,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 **Hôm nay làm gì:** gói trạng thái từng connection (bộ giải khung, bộ đệm ra, mốc thời gian) và xử lý đọc. **Mục tiêu:** đọc dữ liệu rời rạc, chia nhỏ hay dính nhau, mà không bao giờ chặn. **Tại sao:** `FrameDecoder` của bạn vốn đã tăng dần nên dùng lại được nguyên vẹn; đó là phần thưởng của việc tách tầng khung ra từ Phase 2.
 
 - [ ] `include/connection.hpp` + `src/connection.cpp`: `FileDescriptor fd_`, `FrameDecoder decoder_`, `std::vector<uint8_t> out_`, `size_t out_off_`, `time_point last_activity_`, `uint64_t id_`
-- [ ] `on_readable(Broker&)`: lặp `::recv` (non-blocking) tới khi `EAGAIN` **hoặc** hết ngân sách mỗi lượt (ví dụ 64 KiB, để một client ồn ào không độc chiếm vòng lặp); `recv==0` → đánh dấu peer đã đóng; `ECONNRESET` → đóng, log ở mức thấp; còn lại → feed `FrameDecoder`, xử lý mọi frame như `handle_session`, đẩy response vào `out_`
+- [ ] `on_readable(Broker&)`: lặp `::recv` (non-blocking) tới khi `EAGAIN` **hoặc** hết ngân sách mỗi lượt (ví dụ 64 KiB, để một client ồn ào không độc chiếm vòng lặp); `recv==0` → đánh dấu peer đã đóng; `ECONNRESET` → đóng, log ở mức thấp; còn lại → feed `FrameDecoder`, xử lý các frame bằng chính hàm `dispatch_request` của Ngày 8, đẩy response vào `out_` (điều kiện dừng khi `out_` đầy: Ngày 15)
 - [ ] ⚠️ **Tuyệt đối không gọi `recv_some` trên socket non-blocking.** Hàm này (ghi chú #13 của đợt audit) coi `EAGAIN` là "hết timeout `SO_RCVTIMEO`" và `continue` ngay; trên socket non-blocking `EAGAIN` nghĩa là "chưa có dữ liệu", nên nó sẽ quay vòng 100% CPU. Ghi vào `docs/phase-5.md`: "`recv_some`/`recv_exact` chỉ dùng cho socket blocking (client, tool)" và thêm một dòng chú thích ngay trên hàm trong `net_io.hpp`
 - [ ] `FrameDecoder::has_error()` → đóng connection (đúng như hiện tại)
 - [ ] 🧪 `tests/test_connection.cpp` với `socketpair` đặt non-blocking: frame chia 1 byte một lần; 3 frame dính nhau; header `FF FF FF FF` → đóng; peer đóng giữa chừng; response nằm đúng trong `out_`
@@ -351,8 +356,9 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 - [ ] `flush()`: lặp `::send(..., MSG_NOSIGNAL)` từ `out_off_` tới khi gửi hết hoặc `EAGAIN`; hết sạch thì `out_.clear()` và `out_off_ = 0` (tránh `erase` đầu vector mỗi lần: chính lỗi O(n) bạn sẽ đo ở Ngày 22)
 - [ ] Còn dữ liệu → bật `EPOLLOUT` (`Epoll::mod`); hết → tắt. Đây là cách tránh vòng lặp quay vòng của Ngày 11
 - [ ] **Hai ngưỡng:** khi `out_` vượt `kOutHighWater` (1 MiB) thì **tạm tắt `EPOLLIN`** của connection (ngừng nhận request mới), bật lại khi xuống dưới `kOutLowWater` (256 KiB); trần cứng `kOutHardCap` (4 MiB) → đóng connection (chốt an toàn). Ghi 3 hằng số vào `config.hpp`
+- [ ] ⚠️ **Frame đã giải mã/đệm sẵn khi đang tạm dừng:** `on_readable` chỉ xử lý tiếp các frame trong `FrameDecoder` **khi `out_` còn dưới `kOutHighWater`**; nếu vượt giữa chừng thì dừng, để phần frame còn lại trong decoder. Khi `flush()` làm `out_` xuống dưới `kOutLowWater`, phải **chủ động xử lý tiếp** các frame còn trong decoder (không đợi dữ liệu mới từ socket). Quên bước này thì client đã gửi sẵn nhiều request rồi im lặng chờ response sẽ **treo mãi**, vì socket không còn gì để báo `EPOLLIN`
 - [ ] ⚠️ **Half-close:** client gửi request rồi `shutdown(SHUT_WR)` (nhiều tool làm vậy). `recv==0` không có nghĩa là bỏ response đang chờ: đánh dấu `peer_closed_`, **flush hết `out_` rồi mới đóng**
-- [ ] 🧪 Thêm vào `test_connection.cpp`: đặt `SO_SNDBUF` nhỏ rồi sinh response > vài MiB (nhiều `FETCH`) → `flush()` còn dở, `wants_write()` đúng; đọc từ đầu kia → flush xong; vượt `kOutHighWater` → `wants_read()` sai, xuống thấp → đúng; half-close vẫn nhận đủ response
+- [ ] 🧪 Thêm vào `test_connection.cpp`: đặt `SO_SNDBUF` nhỏ rồi sinh response > vài MiB (nhiều `FETCH`) → `flush()` còn dở, `wants_write()` đúng; đọc từ đầu kia → flush xong; gửi một lèo 5.000 `FETCH` (topic có sẵn message lớn để mỗi response vài chục KiB, đủ vượt ngưỡng) rồi chỉ đọc dần → cuối cùng nhận đủ 5.000 response (không treo, không đóng); vượt `kOutHighWater` → `wants_read()` sai, xuống thấp → đúng; half-close vẫn nhận đủ response
 - [ ] 🌿 Commit: `feat: write path with backpressure and half-close handling`
 
 **Xong khi:** test xanh; bạn giải thích được vì sao có hai ngưỡng thay vì một.
@@ -378,14 +384,14 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 **Hôm nay làm gì:** đóng connection rảnh quá lâu, giới hạn tổng số connection, và cho server nhận cấu hình lúc chạy. **Mục tiêu:** làm nốt việc idle timeout mà đợt audit đã hoãn. **Tại sao:** không có timeout thì client treo giữ tài nguyên mãi; và test cần timeout ngắn (hằng `constexpr` không đổi được lúc test).
 
-- [ ] `struct ServerOptions` trong `config.hpp` (giá trị mặc định lấy từ các hằng hiện có): `port`, `max_connections`, `idle_timeout_ms`, ... `EventLoop` nhận nó qua constructor
+- [ ] `struct ServerOptions` trong `config.hpp` (giá trị mặc định lấy từ các hằng hiện có): `port`, `max_connections` (mặc định 10.000), `idle_timeout_ms` (mặc định 60.000), ... `EventLoop` nhận nó qua constructor
 - [ ] Quét một lần mỗi giây: duyệt map, đóng connection có `now - last_activity_ > idle_timeout_ms`. `last_activity_` cập nhật khi **đọc được dữ liệu** (ghi response không tính). Duyệt O(n) mỗi giây với vài nghìn connection là chấp nhận được; ghi chú rằng timer wheel là hướng cải tiến nếu số đo đòi
 - [ ] Vượt `max_connections`: `accept` rồi **đóng ngay** + log Warn (client thấy EOF rõ ràng; để connection treo trong backlog thì client tưởng đã kết nối). Ghi quyết định vào `docs/phase-5.md`
 - [ ] 🧪 Test: `idle_timeout_ms = 200` → client im lặng bị đóng trong ≈ 200–1500 ms (dùng biên rộng, vòng chờ có hạn, không so sánh thời gian sát nút); client gửi `PING` mỗi 50 ms **không** bị đóng; `max_connections = 2` → connection thứ 3 nhận EOF
 - [ ] 📝 Ghi vào `docs/phase-5.md`: idle timeout đã xong (hạng mục hoãn từ đợt audit), kèm commit
 - [ ] 🌿 Commit: `feat: idle timeout and connection limit`
 
-**Xong khi:** test xanh, #27 đóng; bạn giải thích được vì sao ghi response không làm mới `last_activity_`.
+**Xong khi:** test xanh, idle timeout hoạt động; bạn giải thích được vì sao ghi response không làm mới `last_activity_`.
 
 ---
 
@@ -393,7 +399,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 **Hôm nay làm gì:** mở thật nhiều connection rảnh và đo tài nguyên. **Mục tiêu:** có số thật cho "trước/sau". **Tại sao:** đây là bằng chứng cho lý do cả phase này tồn tại.
 
-- [ ] `tools/aether_conn_stress.cpp`: `aether_conn_stress <host> <port> <N> <hold_sec>` mở N connection (non-blocking `connect` hoặc nhiều thread), giữ `hold_sec`, mỗi giây gửi `PING` trên vài connection; thêm vào `CMakeLists.txt`
+- [ ] `tools/aether_conn_stress.cpp`: `aether_conn_stress <host> <port> <N> <hold_sec>` mở N connection (non-blocking `connect` hoặc nhiều thread), giữ `hold_sec` (≤ 50 giây), cứ 20 giây gửi một `PING` trên **mọi** connection để không bị idle timeout mặc định (60 giây) đóng giữa lúc đo; thêm vào `CMakeLists.txt`
 - [ ] 🐧 ⚠️ WSL2 thường cho tối đa 1024 fd mỗi tiến trình: chạy `ulimit -n` rồi `ulimit -n 8192` **trong cùng shell** cho cả server và tool (nếu báo "Operation not permitted" thì xem `ulimit -Hn`). Phía loopback, dải port tạm mặc định khoảng 28.000 port nên N = 2000–10.000 vẫn ổn
 - [ ] 🐧 Đo: `ls /proc/$(pidof aether_server)/task | wc -l` (số thread, kỳ vọng 2: reactor + `BrokerWorker`), `grep VmRSS /proc/$(pidof aether_server)/status`, `ss -tn state established '( sport = :8080 )' | wc -l`, `top -p $(pidof aether_server)` (CPU ≈ 0% khi rảnh). Chạy với **bản Release**
 - [ ] Đối chứng: `git stash`/checkout tag `v0.4.0`, chạy cùng kịch bản: kỳ vọng client thứ 9 treo. Ghi bảng trước/sau vào `docs/phase-5.md` **kèm commit hash và lệnh đã chạy**
@@ -421,7 +427,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 - [ ] CI xanh; `docs/phase-5.md` (≤ 80 dòng: sơ đồ reactor, bảng trước/sau, các quyết định)
 - [ ] Cập nhật README (kiến trúc, mô hình I/O), `check_docs.sh` xanh
-- [ ] **Đồng bộ roadmap:** đối chiếu Phase 6 với repo thật (tên hàm, hằng số, cấu trúc đã đổi); sửa `ROADMAP.md`, ghi "Nhật ký lệch"
+- [ ] **Đồng bộ roadmap:** đối chiếu Phase 6 với repo thật (tên hàm, hằng số, cấu trúc đã đổi); sửa `plan/ROADMAP.vi.md`, ghi "Nhật ký lệch"
 - [ ] Buffer: việc dở ở Ngày 11–19
 - [ ] 🌿 `git tag -a v0.5.0 -m "phase 5: epoll event loop"`, `git push --tags`
 
@@ -448,7 +454,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 - Câu 1 → đọc lại bẫy ở Ngày 16, tự vẽ dòng thời gian một lượt `epoll_wait` có 2 sự kiện (15 phút)
 - Câu 2 → chạy lại `epoll_echo.cpp` ở Ngày 11 với `EPOLLOUT` đăng ký cố định, xem `top` (10 phút)
-- Câu 3 → đọc lại bẫy ở Ngày 14 và `src/net_io.cpp` và thử gọi `recv_some` trên socket non-blocking trong một chương trình thử (15 phút)
+- Câu 3 → đọc lại bẫy ở Ngày 14 và `src/net_io.cpp`, rồi thử gọi `recv_some` trên socket non-blocking trong một chương trình thử (15 phút)
 - Câu 4 → chạy test half-close ở `test_connection.cpp`, bỏ dòng flush rồi xem test đỏ (10 phút)
 
 **Quy tắc sang phase 6:** ít nhất 3/4 câu. Câu còn lại ghi mục **Nợ** của `docs/phase-5.md`, bù ở Ngày 29.
@@ -465,7 +471,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 **Hôm nay làm gì:** viết `aether_bench`, đo bản hiện tại, ghi lại. **Mục tiêu:** có con số gốc để mọi tối ưu sau này so vào. **Tại sao:** tối ưu không có số đo là đoán mò, và số đo không có commit hash là số đo vô chủ.
 
-- [ ] `tools/aether_bench.cpp`: `--host --port --conns 4 --msgs 200000 --size 128 --pipeline 1 --topic bench`. Mỗi connection một `std::jthread`, dùng `AetherClient`. In: msg/s, MB/s, độ trễ p50/p99/max (µs). Lưu mẫu độ trễ vào vector riêng từng thread rồi gộp, sắp xếp (đừng khóa mutex mỗi mẫu)
+- [ ] `tools/aether_bench.cpp`: `--host --port --conns 4 --msgs 200000 --size 128 --pipeline 1 --topic bench`. Mỗi connection một `std::jthread`, dùng `AetherClient`. In: msg/s, MB/s, độ trễ p50/p99/max (µs). Đếm **riêng** `kOk` và `kBusy` (hàng đợi ingest có thể đầy khi producer nhanh hơn worker); throughput tính trên `kOk`, và nếu `kBusy` đáng kể thì ghi vào cột kết quả, đừng giấu. Lưu mẫu độ trễ vào vector riêng từng thread rồi gộp, sắp xếp (đừng khóa mutex mỗi mẫu)
 - [ ] ⚠️ Chỉ đo **bản Release** (`-DCMAKE_BUILD_TYPE=Release`); sanitizer làm chậm 2–10 lần. Chạy server với `2>/dev/null` để log không lẫn vào phép đo
 - [ ] 🐧 Server và bench dùng chung CPU nên số bị méo: ghim lõi, `taskset -c 0-1 ./build/aether_server` và `taskset -c 2-3 ./build/aether_bench ...` (xem `nproc` trước). Loopback đo CPU chứ không đo mạng, ghi rõ điều đó
 - [ ] Bỏ lượt chạy đầu (warm-up), chạy 3 lần, lấy trung vị
@@ -537,7 +543,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 **Hôm nay làm gì:** gây crash có kiểm soát và đếm message mất. **Mục tiêu:** biến "chấp nhận mất khi crash" thành con số. **Tại sao:** nhà tuyển dụng thích một dự án nói được rõ nó **không** đảm bảo gì hơn là một dự án tuyên bố mọi thứ.
 
-- [ ] `aether_cli flood <topic> <count>`: gửi `count` message liên tiếp, in tổng số `kOk` đã nhận sau mỗi 10.000 (để biết "đã được ACK bao nhiêu" tại thời điểm server chết)
+- [ ] `aether_cli flood <topic> <count>`: gửi `count` message liên tiếp, in tiến độ mỗi 10.000, và **luôn in tổng số `kOk` đã nhận khi kết thúc hoặc khi gặp lỗi kết nối** (đó chính là "đã được ACK bao nhiêu" tại thời điểm server chết)
 - [ ] `tests/e2e/loss_window.sh`: chạy server, chạy `flood` nền, `kill -9` server sau ~1 giây, ghi số ACK cuối cùng, khởi động lại server, `fetch` topic, ghi số message còn lại. In bảng "đã ACK / còn lại / mất"
 - [ ] Thêm kịch bản B: SIGTERM nhẹ nhàng (kỳ vọng: vẫn mất hết, vì không ghi đĩa; ghi nhận đó là thiết kế, và là lý do repo này không phải hệ thống CP). Kịch bản C: consumer chết giữa `FETCH` và `COMMIT` → lần sau nhận **lại** các message đó (at-least-once, không mất)
 - [ ] 📝 `docs/AP_TRADEOFFS.md`, bảng các kịch bản: broker crash / shutdown / quá tải / consumer crash → kết quả và vì sao (số liệu kèm commit hash)
@@ -594,7 +600,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 - [ ] CI xanh (3 sanitizer + e2e + `loss_window.sh` + `check_docs.sh`); BENCHMARKS.md không có dòng nào thiếu commit hash
 - [ ] 📝 `docs/phase-6.md` (≤ 80 dòng): các thay đổi đã đo, bảng trước/sau, những gì nhận ra
 - [ ] README: cập nhật mục "Testing & quality" (thêm bench, e2e, loss-window) và cảnh báo trung thực về tính bền
-- [ ] **Đồng bộ roadmap:** đối chiếu Phase 7 với repo thật; sửa `ROADMAP.md`, ghi "Nhật ký lệch"
+- [ ] **Đồng bộ roadmap:** đối chiếu Phase 7 với repo thật; sửa `plan/ROADMAP.vi.md`, ghi "Nhật ký lệch"
 - [ ] 🌿 `git tag -a v0.6.0 -m "phase 6: AP behavior measured"`, `git push --tags`
 
 **Xong khi:** tag `v0.6.0` có trên GitHub, CI xanh.
@@ -603,10 +609,10 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 ## TỔNG KẾT PHASE 6
 
-**Sau phase 6 bạn có:** broker có trần bộ nhớ, chính sách quá tải, thống kê, và quan trọng nhất là **bằng chứng**: số đo throughput/latency, bảng crash loss-window, và so sánh với chi phí `fsync`.
+**Sau phase 6 bạn có:** broker có trần bộ nhớ, chính sách quá tải, thống kê, và quan trọng nhất là **bằng chứng**: số đo throughput/latency, bảng crash loss-window, và (nếu làm Ngày 27) so sánh với chi phí `fsync`.
 
 - [ ] `BENCHMARKS.md` có baseline + các tối ưu, mỗi dòng có commit hash
-- [ ] `AP_TRADEOFFS.md` có bảng crash/quá tải/consumer-crash + bảng chi phí độ bền + danh sách "không làm"
+- [ ] `AP_TRADEOFFS.md` có bảng crash/quá tải/consumer-crash + (nếu làm Ngày 27) bảng chi phí độ bền + danh sách "không làm"
 - [ ] RSS đi ngang trong soak 10 phút; tag `v0.6.0`
 
 **Tự kiểm tra:**
@@ -637,10 +643,11 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 **Hôm nay làm gì:** thay các hằng sửa-rồi-build-lại bằng flag. **Mục tiêu:** `aether_server --port 9000 --idle-timeout-ms 5000`. **Tại sao:** README hiện ghi "không có CLI flag, sửa hằng rồi build lại", đó là thứ người dùng ghét nhất.
 
+- [ ] Tạo `docs/phase-7.md` (mục Quyết định và mục Nợ, như các phase trước)
 - [ ] `parse_options(int argc, char** argv) -> std::optional<ServerOptions>` (đặt trong thư viện để test được), dùng `getopt_long`: `--port`, `--max-connections`, `--idle-timeout-ms`, `--max-topics`, `--retention-messages`, `--retention-bytes`, `--log-level`, `--help`
 - [ ] Giá trị sai (không phải số, ngoài khoảng) → in lý do + usage, thoát mã 2; `--help` thoát mã 0. Bỏ cách `argv[1]` tạm của Ngày 9, sửa `tests/e2e/*.sh` theo `--port`
 - [ ] 🧪 Test `parse_options`: mặc định, từng flag, giá trị xấu, flag lạ, `--port 0` / `--port 70000`
-- [ ] 📝 README: bảng cấu hình được **sinh** hoặc kiểm bởi script (so danh sách flag trong `--help` với bảng README) để không lệch
+- [ ] ⭐ 📝 README: bảng cấu hình được **sinh** hoặc kiểm bởi script (so danh sách flag trong `--help` với bảng README) để không lệch
 - [ ] 🌿 Commit: `feat: command-line configuration`
 
 **Xong khi:** e2e chạy bằng flag; test `parse_options` xanh.
@@ -654,7 +661,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 - [ ] `Logger::set_min_level(Level)` / `Logger::min_level()` (`std::atomic`); kiểm mức **trước** khi dựng chuỗi để mức bị lọc gần như không tốn gì; nối với `--log-level`
 - [ ] Rà mọi lời gọi log trong `src/`: connect/disconnect → Info; lỗi mạng của một client → Debug/Warn; không còn log theo từng message ở bất kỳ mức nào trong đường nóng
 - [ ] ⭐ Log tóm tắt mỗi 10 giây (một dòng: `STATS` rút gọn) khi bật `--stats-interval`; mặc định tắt
-- [ ] 🧪 Test: đặt mức Warn thì Info không xuất hiện (tạm chuyển hướng `stderr` vào một file/pipe bằng `dup2` rồi đọc lại, hoặc cho `Logger` nhận một `std::ostream&` để tiêm vào trong test; chọn cách nào thì ghi vào `DECISIONS.md`)
+- [ ] 🧪 Test: đặt mức Warn thì Info không xuất hiện (tạm chuyển hướng `stderr` vào một file/pipe bằng `dup2` rồi đọc lại, hoặc cho `Logger` nhận một `std::ostream&` để tiêm vào trong test; chọn cách nào thì ghi vào `docs/phase-7.md`)
 - [ ] 🌿 Commit: `feat: log level filtering`
 
 **Xong khi:** test xanh; chạy bench với `--log-level error` và `--log-level info`, ghi cả hai dòng vào BENCHMARKS.md.
@@ -666,7 +673,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 **Hôm nay làm gì:** `produce-stream` (đọc stdin) và `consume` (vòng FETCH + COMMIT). **Mục tiêu:** chạy được pipeline thật và chứng minh không sai thứ tự, không mất khi không quá tải. **Tại sao:** đây là demo thuyết phục nhất và cũng là test toàn vẹn tốt nhất.
 
 - [ ] `aether_cli produce-stream <topic>`: mỗi dòng stdin là một message, gửi pipelined (K = 64), đếm `kOk`/`kBusy`; gặp `kBusy` thì dừng ngắn rồi gửi lại **chính message đó** (thể hiện cách producer xử lý quá tải)
-- [ ] `aether_cli consume <topic> <group> [--max N]`: vòng `FETCH` → in từng message ra stdout → `COMMIT` **sau khi in xong** (at-least-once); không có dữ liệu thì chờ 50 ms rồi hỏi lại (chưa có long-poll)
+- [ ] `aether_cli consume <topic> <group> [--max N]`: vòng `FETCH` → in từng message ra stdout → `COMMIT` **sau khi in xong** (at-least-once); không có dữ liệu thì chờ 50 ms rồi hỏi lại (chưa có long-poll); thêm `--idle-exit-ms` (mặc định 5000): quá thời gian đó không nhận được gì thì thoát, để script e2e không treo CI khi thiếu message
 - [ ] 🐧 Kiểm toàn vẹn: `seq 1 100000 | aether_cli produce-stream t` rồi `aether_cli consume t g --max 100000 | sort -n | diff - <(seq 1 100000)` phải im lặng. Đặt vào `tests/e2e/integrity.sh`. (Cấu hình trần đủ lớn để không bị retention loại, nếu không `diff` sẽ cho thấy đúng hiện tượng bạn đã thiết kế)
 - [ ] 🧪 Thêm một kịch bản e2e: giết `consume` giữa chừng (SIGKILL), chạy lại, kiểm có thể trùng một vài message nhưng không thiếu
 - [ ] 🌿 Commit: `feat: streaming producer and consumer commands`
@@ -693,7 +700,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 **Hôm nay làm gì:** viết lại README cho broker. **Mục tiêu:** người lạ hiểu repo là gì, chạy được, tin được trong 2 phút. **Tại sao:** README là thứ nhà tuyển dụng đọc đầu tiên, và cũng là thứ lệch nhanh nhất.
 
-- [ ] Rà `docs/assets/`: `architecture.svg` (và mọi hình khác) hiện mô tả echo + `handle_echo`; thay bằng sơ đồ Mermaid trong README (văn bản, diff được, không ai quên cập nhật ảnh). Ảnh nào còn dùng thì **không chứa con số** (`chips.svg` đang có số test cứng; bỏ số, để `check_docs.sh` kiểm số trong text)
+- [ ] Rà `docs/assets/`: `architecture.svg` (và mọi hình khác) hiện mô tả echo + `handle_echo`; thay bằng sơ đồ Mermaid trong README (văn bản, diff được, không ai quên cập nhật ảnh). Ảnh nào còn dùng thì **không chứa con số** (README đang ghi "18 unit tests" trong alt text và có thể cả trong `chips.svg`; bỏ số khỏi ảnh, để `check_docs.sh` ⭐ kiểm số trong text)
 - [ ] Cấu trúc README: một câu mô tả → khối "Where the project stands" **trung thực** (in-memory, không bền, single node) → quick start (trích từ `tests/e2e/quickstart.sh`) → kiến trúc → giao thức (link PROTOCOL.md) → kết quả đo (link BENCHMARKS.md, không chép số) → đánh đổi AP (link AP_TRADEOFFS.md)
 - [ ] Cập nhật cây thư mục trong README, `Doxyfile` nếu còn trỏ tên cũ
 - [ ] `check_docs.sh` xanh; mọi block lệnh trong README phải chạy được (đối chiếu với e2e)
@@ -707,7 +714,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 **Hôm nay làm gì:** khóa v1 và đóng mọi mục mở. **Mục tiêu:** không còn "deferred" nào treo lơ lửng. **Tại sao:** các mục "hoãn" cũ là nguồn lệch kinh điển.
 
-- [ ] `tests/test_protocol_vectors.cpp`: các ví dụ hex trong `PROTOCOL.md` (PING, PRODUCE, FETCH, COMMIT, STATS) làm golden vector; sửa giao thức mà quên cập nhật doc thì test đỏ
+- [ ] `tests/test_protocol_vectors.cpp`: bổ sung vào `PROTOCOL.md` ví dụ hex cho `FETCH`, `COMMIT`, `STATS` (Ngày 2 mới có `PING`, `PRODUCE`), rồi dùng toàn bộ làm golden vector; sửa giao thức mà quên cập nhật doc thì test đỏ
 - [ ] `PROTOCOL.md`: bỏ chữ "PLANNED", thêm mục "Compatibility": v0 echo đã bị thay (nêu rõ vì sao client cũ không còn tương thích)
 - [ ] Rà mục **Quyết định** và **Nợ** trong `docs/phase-4.md`..`phase-6.md`: mỗi mục hoặc đã xong (kèm commit/tag), hoặc ghi rõ hoãn tới đâu và vì sao
 - [ ] Tạo `CHANGELOG.md` (`v0.4.0` → `v1.0.0`) từ lịch sử tag
@@ -761,7 +768,7 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 - [ ] CI xanh; `check_docs.sh` xanh; `CHANGELOG.md` đủ
 - [ ] 🌿 `git tag -a v1.0.0 -m "aether stream layer: AP broker"`, `git push --tags`, tạo GitHub Release (dán mục `v1.0.0` của CHANGELOG, đính kèm link BENCHMARKS và AP_TRADEOFFS)
 - [ ] 📝 `docs/retrospective.md` (một trang): 3 điều làm tốt, 3 điều làm tốn thời gian ngoài dự kiến, lệch nào đã được script bắt, điều gì sẽ làm khác ở repo kế tiếp
-- [ ] **Đồng bộ roadmap lần cuối:** hoàn tất bảng "Nhật ký lệch"; chuyển `ROADMAP.md` sang trạng thái "đã hoàn thành" (thêm `<!-- historical -->` ở đầu)
+- [ ] **Đồng bộ roadmap lần cuối:** hoàn tất bảng "Nhật ký lệch"; chuyển `plan/ROADMAP.vi.md` sang trạng thái "đã hoàn thành" (thêm `<!-- historical -->` ở đầu)
 - [ ] Chọn repo kế tiếp trong hệ Aether
 
 **Xong khi:** tag `v1.0.0` và GitHub Release có mặt.
@@ -781,14 +788,14 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 1. Mô tả hành trình một message từ `PRODUCE` đến `FETCH` (có mặt: reactor, hàng đợi ingest, worker, log, tracker).
 2. Repo này "AP" ở điểm nào và **không** AP ở điểm nào?
 3. `check_docs.sh` bắt loại lệch nào, và loại lệch nào nó không bắt được (cần đọc bằng mắt)?
-4. Nếu phải thêm độ bền (ghi đĩa), thành phần nào đổi và số đo ở Ngày 27 nói gì về chi phí?
+4. Nếu phải thêm độ bền (ghi đĩa), thành phần nào đổi (và nếu đã làm Ngày 27, số đo nói gì về chi phí)?
 
 **Nếu chưa trả lời được, bù ngay:**
 
 - Câu 1 → vẽ lại sơ đồ Mermaid ở đầu file này từ trí nhớ rồi so (15 phút)
 - Câu 2 → đọc lại `AP_TRADEOFFS.md` và tự viết 5 dòng (15 phút)
 - Câu 3 → đọc `tools/check_docs.sh`, liệt kê các luật và 1 loại lệch nằm ngoài (10 phút)
-- Câu 4 → xem bảng fsync, viết 3 dòng về chi phí (10 phút)
+- Câu 4 → vẽ lại sơ đồ: ACK sẽ phải đợi bước nào nếu có ghi đĩa; xem bảng fsync nếu có, viết 3 dòng về chi phí (10 phút)
 
 ---
 
@@ -801,11 +808,16 @@ Bảng này là nơi ghi mọi chỗ lộ trình hoặc tài liệu lệch với
 |L1|Đợt audit|`inventory.md`, `TODO.md`, `DECISIONS.md` được tạo để commit xanh trong lúc không code, giá trị thấp và đã bị xóa. Phần đáng giữ (pop_for không dùng, `recv_some` và `EAGAIN`, idle timeout hoãn) đã chuyển vào lộ trình này|Đã xử lý|
 |L2|Khi đọc repo|README có thể còn link tới các file đã xóa|Ngày 1 (`check_docs.sh` luật 1/3)|
 |L3|Khi đọc repo|CI `build.yml`/`lint.yml` còn kích hoạt trên nhánh `audit/clean`|Ngày 1|
-|L4|Khi đọc repo|Số test (`18`) và các con số khác chép tay vào README và `chips.svg`; sẽ lệch khi thêm test|Ngày 1 (luật 4), Ngày 35|
-|L5|Khi đọc repo|`architecture.svg` mô tả echo + `handle_echo`; sẽ sai ngay khi có broker|Ngày 35|
+|L4|Khi đọc repo|Số test (`18`) và các con số khác chép tay vào README (và có thể cả `chips.svg`); sẽ lệch khi thêm test|Ngày 1 (luật 4 ⭐), Ngày 35|
+|L5|Khi đọc repo|`architecture.svg` mô tả echo + `handle_echo` (theo alt text trong README); sẽ sai ngay khi có broker|Ngày 35|
 |L6|Khi đọc repo|Đặc tả v1 cũ ("planned") thiếu consumer group, offset, mã trạng thái|Ngày 2|
 |L7|Khi đọc code|`recv_some`/`recv_exact` coi `EAGAIN` là "hết timeout" (ghi chú #13 của đợt audit): sai trên socket non-blocking, sẽ quay vòng 100% CPU|Ngày 14|
 |L8|Khi đọc code|`FrameDecoder::next()` gọi `erase` đầu buffer sau mỗi frame (O(n)); chưa đau ở buffer 4 KiB|Ngày 22|
 |L9|Khi đọc code|`ThreadSafeQueue::pop_for` chưa được dùng ngoài test (ghi chú #8 của đợt audit)|Ngày 19|
 |L10|Khi thiết kế|`kMaxMessageSize` không thể bằng `kMaxFrameSize`: header request/response nằm trong cùng 1 MiB|Ngày 2|
 |L11|Khi đọc code|`handle_echo` log mỗi frame ở mức Info; sẽ thành nút cổ chai khi có broker|Ngày 8 (bỏ), Ngày 32 (mức log)|
+|L12|Rà lần 2 (24/11)|ACK trả trước khi worker ghi log, nên `produce` rồi `fetch` ngay có thể rỗng: e2e sẽ lúc xanh lúc đỏ nếu không chờ|Ngày 3 (vá điều h), Ngày 9|
+|L13|Rà lần 2|Tạm dừng đọc khi `out_` đầy mà không xử lý lại các frame còn trong decoder sẽ làm client treo mãi|Ngày 15|
+|L14|Rà lần 2|Tạo topic lười ở worker làm giới hạn `kMaxTopics` vô nghĩa (hàng đợi chứa topic chưa được đếm)|Ngày 3 (vá), Ngày 7|
+|L15|Rà lần 2|Test "cắt cụt payload thì luôn `nullopt`" sai với `PRODUCE` (body là byte tự do)|Ngày 3|
+|L16|Rà lần 2|Thiếu giá trị mặc định cho dung lượng hàng đợi ingest, `max_connections`, `idle_timeout_ms`; stress tool bị idle timeout đóng giữa lúc đo|Ngày 6, 17, 18|
