@@ -80,15 +80,18 @@ Responses are returned **in the same order as requests** on a given connection (
 - **(e)** `COMMIT` only moves forward; it never moves backward and never exceeds `next_offset`.
 - **(f)** Topic and group names match `[A-Za-z0-9._-]{1,64}` (prevents log injection; `/` is reserved as a key separator).
 - **(g)** `MaxMessages` is clamped to `kMaxFetchMessages = 1000`; a value of `0` is `kBadRequest`.
+- **(h)** `kOk` on `PRODUCE` does **not** mean the message is immediately visible to `FETCH`. The ACK is returned before the ingest worker appends to the log, so a message may appear a few milliseconds later. Consumers must poll; tests and e2e scripts must wait with a bounded loop, not a fixed `sleep`.
+- **(i)** `FETCH` and `COMMIT` never create a topic. Only `PRODUCE` creates a topic. This prevents an untrusted client from creating topics just by asking.
 
 ### 3.5 Size limits
 
 `kMaxMessageSize != kMaxFrameSize`. A `FETCH` response adds 17 bytes (`Status 1 + FirstOffset 8 + Count 4 + MsgLength 4`), and a `PRODUCE` request adds `3 + len(topic)`. Both must fit inside the 1 MiB frame.
 
 - `kMaxMessageSize = kMaxFrameSize - 128` (largest header today is `3 + 64 = 67` bytes; 128 leaves headroom).
-- Broker soft limits: `kMaxTopics = 64`, `kMaxGroups = 1024`.
+- Broker limits: `kMaxTopics = 64` (hard limit, enforced at `PRODUCE` in Day 7), `kMaxGroups = 1024`.
+- `kIngestCapacity` (ingest queue size) is a broker constant defined on Day 6, not a protocol constant.
 
-`static_assert` in `config.hpp` / `frame.hpp` enforces:
+`static_assert` in `config.hpp` enforces:
 
 - `kMaxMessageSize + 17 <= kMaxFrameSize`
 - `kMaxMessageSize + 3 + 64 <= kMaxFrameSize`
