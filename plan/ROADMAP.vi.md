@@ -135,14 +135,14 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
 
 **Hôm nay làm gì:** viết bộ mã hóa/giải mã request và response. **Mục tiêu:** dữ liệu rác từ mạng không bao giờ làm crash hay ném exception. **Tại sao:** đây là chỗ đầu tiên code của bạn tin vào cấu trúc do người lạ gửi tới; mọi `length` đều phải được kiểm tra trước khi dùng.
 
-- [ ] 📝 **Vá nhỏ cho đặc tả Ngày 2** (phát hiện khi rà lại lộ trình sau khi Ngày 2 đã xong; **không sửa gì đã tick, chỉ thêm**). Ghi vào `docs/PROTOCOL.md` (mục ngữ nghĩa) và mục **Quyết định** của `docs/phase-4.md`:
+- [x] 📝 **Vá nhỏ cho đặc tả Ngày 2** (phát hiện khi rà lại lộ trình sau khi Ngày 2 đã xong; **không sửa gì đã tick, chỉ thêm**). Ghi vào `docs/PROTOCOL.md` (mục ngữ nghĩa) và mục **Quyết định** của `docs/phase-4.md`:
     - (h) ⚠️ **ACK không có nghĩa là FETCH thấy ngay**: `kOk` được trả trước khi worker ghi vào log, nên message có thể xuất hiện sau vài ms. Consumer phải hỏi lại, test và e2e phải chờ có hạn
     - (i) `FETCH`/`COMMIT` **không bao giờ tạo** topic mới (chỉ `PRODUCE` tạo), để người lạ không thể tạo topic bằng cách hỏi
     - `kMaxTopics = 64` là giới hạn **cứng**, kiểm ngay lúc `PRODUCE` (Ngày 7). Chữ "mềm" ở Ngày 2 không còn đúng
     - Hằng `kIngestCapacity` sẽ thêm ở Ngày 6, không phải ở Ngày 2
-- [ ] `include/message.hpp` + `src/message.cpp` (đã được `file(GLOB CONFIGURE_DEPENDS)` nhặt, không cần sửa CMake): `enum class Command : uint8_t`, `enum class StatusCode : uint8_t`, `struct Request { Command cmd; std::string topic; std::vector<uint8_t> body; }`
+- [x] `include/message.hpp` + `src/message.cpp` (đã được `file(GLOB CONFIGURE_DEPENDS)` nhặt, không cần sửa CMake): `enum class Command : uint8_t`, `enum class StatusCode : uint8_t`, `struct Request { Command cmd; std::string topic; std::vector<uint8_t> body; }`
 - [ ] `std::optional<Request> decode_request(std::span<const uint8_t>)`, `std::vector<uint8_t> encode_response(StatusCode, std::span<const uint8_t> body)`, và phía client `encode_request`, `decode_response`
-- [ ] Viết một `BodyReader` nhỏ: con trỏ có kiểm biên (`read_u16/u32/u64/bytes` trả `bool`). Cả FETCH lẫn COMMIT dùng chung để khỏi lặp lại kiểm biên. ⚠️ Số 64-bit big-endian: không có `htonll` chuẩn, dùng `htobe64` / `be64toh` trong `<endian.h>`
+- [x] Viết một `BodyReader` nhỏ: con trỏ có kiểm biên (`read_u16/u32/u64/bytes` trả `bool`). Cả FETCH lẫn COMMIT dùng chung để khỏi lặp lại kiểm biên. ⚠️ Số 64-bit big-endian: không có `htonll` chuẩn, dùng `htobe64` / `be64toh` trong `<endian.h>`
 - [ ] ⚠️ Quy tắc: **dữ liệu từ mạng → trả `nullopt`/`kBadRequest`, không ném exception** (khác `encode_frame` ném khi payload quá lớn, vì phía đó là lỗi của chính ta)
 - [ ] 🧪 `tests/test_message.cpp`: round-trip từng lệnh; các vector hex của Ngày 2; **cắt cụt**: lấy payload hợp lệ rồi cắt ở mọi độ dài trong phần header (`Command + TopicLength + Topic`) → `decode_request` phải trả `nullopt`; cắt trong body của `FETCH`/`COMMIT` → hàm parse body trả `false`; còn cắt trong body của `PRODUCE` thì **vẫn hợp lệ** (body là byte tự do, một message ngắn hơn); `TopicLength` lớn hơn phần còn lại; topic rỗng với `PRODUCE`/`FETCH`/`COMMIT` → `nullopt` (chỉ `PING` được rỗng); ký tự cấm trong tên; tên 65 ký tự; "fuzz-lite": 100.000 chuỗi byte ngẫu nhiên (seed cố định) đưa vào `decode_request`, chạy dưới ASan không được crash
 - [ ] Thêm `tests/test_message.cpp` vào `add_executable(aether_tests ...)` (luật 2 của `check_docs.sh` sẽ nhắc nếu quên)
