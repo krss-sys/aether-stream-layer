@@ -120,7 +120,19 @@ std::optional<Request> decode_request(std::span<const uint8_t> payload) {
     std::span<const uint8_t> topic_bytes;
     if (!reader.read_bytes(topic_len, topic_bytes)) return std::nullopt;
 
-    if (!valid_topic_name(topic_bytes)) return std::nullopt;
+    const bool is_ping = (cmd_byte == static_cast<uint8_t>(Command::kPing));
+
+    if (is_ping) {
+        // PING: topic rỗng được phép; nếu có topic thì vẫn phải hợp lệ.
+        if (!topic_bytes.empty() && !valid_topic_name(topic_bytes)) {
+            return std::nullopt;
+        }
+    } else {
+        // Các lệnh khác: topic phải hợp lệ và không rỗng.
+        if (topic_bytes.empty() || !valid_topic_name(topic_bytes)) {
+            return std::nullopt;
+        }
+    }
 
     std::string topic(reinterpret_cast<const char*>(topic_bytes.data()), topic_bytes.size());
 
@@ -142,5 +154,23 @@ std::vector<uint8_t> encode_request(const Request& req) {
     append_bytes(out, std::span<const uint8_t>(req.body));
 
     return out;
+}
+
+std::vector<uint8_t> encode_response(StatusCode status, std::span<const uint8_t> body) {
+    std::vector<uint8_t> out;
+    out.push_back(static_cast<uint8_t>(status));
+    append_bytes(out, body);
+    return out;
+}
+
+std::optional<Response> decode_response(std::span<const uint8_t> payload) {
+    BodyReader reader(payload);
+
+    uint8_t status_byte = 0;
+    if (!reader.read_u8(status_byte)) return std::nullopt;
+
+    std::vector<uint8_t> body(payload.begin() + 1, payload.end());
+
+    return Response{static_cast<StatusCode>(status_byte), std::move(body)};
 }
 }  // namespace aether
