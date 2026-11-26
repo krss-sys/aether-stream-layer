@@ -53,6 +53,7 @@ add_executable(aether_tests
     tests/test_frame.cpp
     tests/test_net_io.cpp
     tests/test_client_reconnect.cpp
+    tests/test_message.cpp
 )
 target_link_libraries(aether_tests PRIVATE aether_core GTest::gtest_main)
 gtest_discover_tests(aether_tests)
