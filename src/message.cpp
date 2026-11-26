@@ -2,7 +2,10 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <span>
+#include <utility>
+#include <vector>
 
 namespace aether {
 BodyReader::BodyReader(std::span<const uint8_t> data) : data_(data), pos_(0) {}
@@ -61,11 +64,83 @@ bool BodyReader::read_bytes(size_t n, std::span<const uint8_t>& out) {
     return true;
 }
 
-bool BodyReader::at_end() const {
-    return pos_ >= data_.size();
+bool BodyReader::at_end() const { return pos_ >= data_.size(); }
+
+size_t BodyReader::remaining() const { return data_.size() - pos_; }
+
+static bool valid_topic_name(std::span<const uint8_t> name) {
+    if (name.empty() || name.size() > 64) return false;
+
+    for (uint8_t c : name) {
+        bool ok = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
+                  c == '.' || c == '_' || c == '-';
+        if (!ok) return false;
+    }
+    return true;
 }
 
-size_t BodyReader::remaining() const {
-    return data_.size() - pos_;
+static void append_u16_be(std::vector<uint8_t>& out, uint16_t value) {
+    out.push_back(static_cast<uint8_t>(value >> 8));
+    out.push_back(static_cast<uint8_t>(value));
+}
+
+static void append_u32_be(std::vector<uint8_t>& out, uint32_t value) {
+    out.push_back(static_cast<uint8_t>(value >> 24));
+    out.push_back(static_cast<uint8_t>(value >> 16));
+    out.push_back(static_cast<uint8_t>(value >> 8));
+    out.push_back(static_cast<uint8_t>(value));
+}
+
+static void append_u64_be(std::vector<uint8_t>& out, uint64_t value) {
+    out.push_back(static_cast<uint8_t>(value >> 56));
+    out.push_back(static_cast<uint8_t>(value >> 48));
+    out.push_back(static_cast<uint8_t>(value >> 40));
+    out.push_back(static_cast<uint8_t>(value >> 32));
+    out.push_back(static_cast<uint8_t>(value >> 24));
+    out.push_back(static_cast<uint8_t>(value >> 16));
+    out.push_back(static_cast<uint8_t>(value >> 8));
+    out.push_back(static_cast<uint8_t>(value));
+}
+
+static void append_bytes(std::vector<uint8_t>& out, std::span<const uint8_t> bytes) {
+    out.insert(out.end(), bytes.begin(), bytes.end());
+}
+
+std::optional<Request> decode_request(std::span<const uint8_t> payload) {
+    BodyReader reader(payload);
+
+    uint8_t cmd_byte = 0;
+    if (!reader.read_u8(cmd_byte)) return std::nullopt;
+
+    uint16_t topic_len = 0;
+    if (!reader.read_u16(topic_len)) return std::nullopt;
+
+    if (topic_len > 64) return std::nullopt;
+
+    std::span<const uint8_t> topic_bytes;
+    if (!reader.read_bytes(topic_len, topic_bytes)) return std::nullopt;
+
+    if (!valid_topic_name(topic_bytes)) return std::nullopt;
+
+    std::string topic(reinterpret_cast<const char*>(topic_bytes.data()), topic_bytes.size());
+
+    std::vector<uint8_t> body(topic_bytes.end(), payload.end());
+
+    return Request{static_cast<Command>(cmd_byte), std::move(topic), std::move(body)};
+}
+
+std::vector<uint8_t> encode_request(const Request& req) {
+    std::vector<uint8_t> out;
+
+    out.push_back(static_cast<uint8_t>(req.cmd));
+
+    append_u16_be(out, static_cast<uint16_t>(req.topic.size()));
+
+    append_bytes(out, std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(req.topic.data()),
+                                               req.topic.size()));
+
+    append_bytes(out, std::span<const uint8_t>(req.body));
+
+    return out;
 }
 }  // namespace aether
