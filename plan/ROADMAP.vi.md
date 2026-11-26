@@ -141,12 +141,12 @@ cmake -B build-tsan -DAETHER_SANITIZE=thread && cmake --build build-tsan -j && c
     - `kMaxTopics = 64` là giới hạn **cứng**, kiểm ngay lúc `PRODUCE` (Ngày 7). Chữ "mềm" ở Ngày 2 không còn đúng
     - Hằng `kIngestCapacity` sẽ thêm ở Ngày 6, không phải ở Ngày 2
 - [x] `include/message.hpp` + `src/message.cpp` (đã được `file(GLOB CONFIGURE_DEPENDS)` nhặt, không cần sửa CMake): `enum class Command : uint8_t`, `enum class StatusCode : uint8_t`, `struct Request { Command cmd; std::string topic; std::vector<uint8_t> body; }`
-- [ ] `std::optional<Request> decode_request(std::span<const uint8_t>)`, `std::vector<uint8_t> encode_response(StatusCode, std::span<const uint8_t> body)`, và phía client `encode_request`, `decode_response`
+- [x] `std::optional<Request> decode_request(std::span<const uint8_t>)`, `std::vector<uint8_t> encode_response(StatusCode, std::span<const uint8_t> body)`, và phía client `encode_request`, `decode_response`
 - [x] Viết một `BodyReader` nhỏ: con trỏ có kiểm biên (`read_u16/u32/u64/bytes` trả `bool`). Cả FETCH lẫn COMMIT dùng chung để khỏi lặp lại kiểm biên. ⚠️ Số 64-bit big-endian: không có `htonll` chuẩn, dùng `htobe64` / `be64toh` trong `<endian.h>`
-- [ ] ⚠️ Quy tắc: **dữ liệu từ mạng → trả `nullopt`/`kBadRequest`, không ném exception** (khác `encode_frame` ném khi payload quá lớn, vì phía đó là lỗi của chính ta)
-- [ ] 🧪 `tests/test_message.cpp`: round-trip từng lệnh; các vector hex của Ngày 2; **cắt cụt**: lấy payload hợp lệ rồi cắt ở mọi độ dài trong phần header (`Command + TopicLength + Topic`) → `decode_request` phải trả `nullopt`; cắt trong body của `FETCH`/`COMMIT` → hàm parse body trả `false`; còn cắt trong body của `PRODUCE` thì **vẫn hợp lệ** (body là byte tự do, một message ngắn hơn); `TopicLength` lớn hơn phần còn lại; topic rỗng với `PRODUCE`/`FETCH`/`COMMIT` → `nullopt` (chỉ `PING` được rỗng); ký tự cấm trong tên; tên 65 ký tự; "fuzz-lite": 100.000 chuỗi byte ngẫu nhiên (seed cố định) đưa vào `decode_request`, chạy dưới ASan không được crash
-- [ ] Thêm `tests/test_message.cpp` vào `add_executable(aether_tests ...)` (luật 2 của `check_docs.sh` sẽ nhắc nếu quên)
-- [ ] 🌿 Commit: `feat: add protocol v1 message codec`
+- [x] ⚠️ Quy tắc: **dữ liệu từ mạng → trả `nullopt`/`kBadRequest`, không ném exception** (khác `encode_frame` ném khi payload quá lớn, vì phía đó là lỗi của chính ta)
+- [x] 🧪 `tests/test_message.cpp`: round-trip từng lệnh; các vector hex của Ngày 2; **cắt cụt**: lấy payload hợp lệ rồi cắt ở mọi độ dài trong phần header (`Command + TopicLength + Topic`) → `decode_request` phải trả `nullopt`; cắt trong body của `FETCH`/`COMMIT` → hàm parse body trả `false`; còn cắt trong body của `PRODUCE` thì **vẫn hợp lệ** (body là byte tự do, một message ngắn hơn); `TopicLength` lớn hơn phần còn lại; topic rỗng với `PRODUCE`/`FETCH`/`COMMIT` → `nullopt` (chỉ `PING` được rỗng); ký tự cấm trong tên; tên 65 ký tự; "fuzz-lite": 100.000 chuỗi byte ngẫu nhiên (seed cố định) đưa vào `decode_request`, chạy dưới ASan không được crash
+- [x] Thêm `tests/test_message.cpp` vào `add_executable(aether_tests ...)` (luật 2 của `check_docs.sh` sẽ nhắc nếu quên)
+- [x] 🌿 Commit: `feat: add protocol v1 message codec`
 
 **Xong khi:** ASan xanh với fuzz-lite; bạn giải thích được vì sao decode không ném exception.
 
